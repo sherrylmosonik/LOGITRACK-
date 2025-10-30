@@ -55,6 +55,174 @@ export class MemStorage implements IStorage {
   private vehicleIdCounter = 1;
   private eventIdCounter = 1;
 
+  constructor() {
+    this.initializeSampleData();
+  }
+
+  private initializeSampleData() {
+    const adminUser: User = {
+      id: this.userIdCounter++,
+      username: "admin",
+      password: "admin123",
+      fullName: "Admin User",
+      email: "admin@logitrack.com",
+      phone: "+254712000001",
+      role: "admin",
+    };
+    this.users.push(adminUser);
+
+    const clientUser: User = {
+      id: this.userIdCounter++,
+      username: "client1",
+      password: "client123",
+      fullName: "Grace Kibet",
+      email: "grace@example.com",
+      phone: "+254712000002",
+      role: "client",
+    };
+    this.users.push(clientUser);
+
+    const driverUser: User = {
+      id: this.userIdCounter++,
+      username: "driver1",
+      password: "driver123",
+      fullName: "John Mwangi",
+      email: "john@example.com",
+      phone: "+254712000003",
+      role: "personnel",
+    };
+    this.users.push(driverUser);
+
+    const vehicle1: Vehicle = {
+      id: this.vehicleIdCounter++,
+      plateNumber: "KBZ 123A",
+      vehicleType: "van",
+      capacity: "1000",
+      currentDriverId: driverUser.id,
+      status: "in_use",
+      lastLat: "-1.2921",
+      lastLng: "36.8219",
+      lastUpdated: new Date(),
+    };
+    this.vehicles.push(vehicle1);
+
+    const vehicle2: Vehicle = {
+      id: this.vehicleIdCounter++,
+      plateNumber: "KCA 456B",
+      vehicleType: "truck",
+      capacity: "2000",
+      currentDriverId: null,
+      status: "available",
+      lastLat: null,
+      lastLng: null,
+      lastUpdated: null,
+    };
+    this.vehicles.push(vehicle2);
+
+    const personnel1: Personnel = {
+      id: this.personnelIdCounter++,
+      userId: driverUser.id,
+      position: "driver",
+      licenseNumber: "DL123456",
+      vehicleAssigned: "KBZ 123A",
+      isActive: true,
+      hireDate: new Date("2024-01-15"),
+    };
+    this.personnel.push(personnel1);
+
+    const shipment1: Shipment = {
+      id: this.shipmentIdCounter++,
+      trackingNumber: "TN100001",
+      clientId: clientUser.id,
+      assignedDriverId: driverUser.id,
+      pickupAddress: "Westlands, Nairobi",
+      deliveryAddress: "Eldoret Town, Eldoret",
+      recipientName: "Sarah Wanjiku",
+      recipientPhone: "+254712345678",
+      status: "in_transit",
+      paymentMethod: "cash_on_delivery",
+      paymentStatus: "pending",
+      amount: "2500",
+      weight: "15",
+      dimensions: "30x30x40cm",
+      notes: "Fragile - Handle with care",
+      createdAt: new Date("2025-01-25T08:00:00"),
+      deliveredAt: null,
+    };
+    this.shipments.push(shipment1);
+
+    this.shipmentEvents.push({
+      id: this.eventIdCounter++,
+      shipmentId: shipment1.id,
+      eventType: "created",
+      description: "Shipment created",
+      location: shipment1.pickupAddress,
+      createdBy: clientUser.id,
+      createdAt: new Date("2025-01-25T08:00:00"),
+    });
+
+    this.shipmentEvents.push({
+      id: this.eventIdCounter++,
+      shipmentId: shipment1.id,
+      eventType: "assigned",
+      description: "Assigned to driver John Mwangi",
+      location: null,
+      createdBy: adminUser.id,
+      createdAt: new Date("2025-01-25T09:00:00"),
+    });
+
+    this.shipmentEvents.push({
+      id: this.eventIdCounter++,
+      shipmentId: shipment1.id,
+      eventType: "picked_up",
+      description: "Package picked up from sender",
+      location: shipment1.pickupAddress,
+      createdBy: driverUser.id,
+      createdAt: new Date("2025-01-25T10:30:00"),
+    });
+
+    this.shipmentEvents.push({
+      id: this.eventIdCounter++,
+      shipmentId: shipment1.id,
+      eventType: "in_transit",
+      description: "Package in transit to destination",
+      location: "Nakuru, Kenya",
+      createdBy: driverUser.id,
+      createdAt: new Date("2025-01-25T14:00:00"),
+    });
+
+    const shipment2: Shipment = {
+      id: this.shipmentIdCounter++,
+      trackingNumber: "TN100002",
+      clientId: clientUser.id,
+      assignedDriverId: null,
+      pickupAddress: "Industrial Area, Nairobi",
+      deliveryAddress: "Kisumu Town, Kisumu",
+      recipientName: "Peter Omondi",
+      recipientPhone: "+254723456789",
+      status: "pending",
+      paymentMethod: "prepaid",
+      paymentStatus: "paid",
+      amount: "3200",
+      weight: "25",
+      dimensions: "50x50x60cm",
+      notes: null,
+      createdAt: new Date("2025-01-26T11:00:00"),
+      deliveredAt: null,
+    };
+    this.shipments.push(shipment2);
+
+    this.shipmentEvents.push({
+      id: this.eventIdCounter++,
+      shipmentId: shipment2.id,
+      eventType: "created",
+      description: "Shipment created",
+      location: shipment2.pickupAddress,
+      createdBy: clientUser.id,
+      createdAt: new Date("2025-01-26T11:00:00"),
+    });
+  }
+
   // Users
   async getUserById(id: number): Promise<User | undefined> {
     return this.users.find(u => u.id === id);
