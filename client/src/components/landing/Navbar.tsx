@@ -15,9 +15,9 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
+    { label: "Track Shipment", href: "/track" },
     { label: "Services", href: "#services" },
     { label: "How it works", href: "#how-it-works" },
-    { label: "Testimonials", href: "#testimonials" },
     { label: "Contact", href: "#contact" },
   ];
 
@@ -40,6 +40,12 @@ export default function Navbar() {
                 key={link.label}
                 href={link.href}
                 className="text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
+                onClick={(e) => {
+                  if (link.href.startsWith('/')) {
+                    e.preventDefault();
+                    window.location.href = link.href;
+                  }
+                }}
               >
                 {link.label}
               </a>
