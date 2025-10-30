@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogiTrack - Transport Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #638cd7 100%);
+            min-height: 100vh;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .background-pattern {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.05;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 50px, #fff 50px, #fff 51px),
+                repeating-linear-gradient(90deg, transparent, transparent 50px, #fff 50px, #fff 51px);
+        }
+
+        .login-wrapper {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .branding-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px;
+            color: white;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        .logo-text h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        /* keep logo-text and the whole logo container visually neutral when used as an anchor */
+        .logo-text { color: inherit; text-decoration: none; display: inline-block }
+        .logo-link { color: inherit; text-decoration: none; display: flex; align-items: center; gap: 15px }
+        .logo-link:hover { opacity: 0.95; background-color: #64748b; width: fit-content;  border-radius: 10px; }
+
+        .logo-text p {
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .features {
+            margin-top: 60px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 25px;
+            opacity: 0;
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .feature-item:nth-child(1) { animation-delay: 0.2s; }
+        .feature-item:nth-child(2) { animation-delay: 0.4s; }
+        .feature-item:nth-child(3) { animation-delay: 0.6s; }
+        .feature-item:nth-child(4) { animation-delay: 0.8s; }
+
+
+       @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .feature-content h3 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .feature-content p {
+            font-size: 14px;
+            opacity: 0.85;
+            line-height: 1.5;
+        }
+
+        .login-section {
+            flex: 0 0 460px;
+            display: flex;
+            align-items: center;
+        }
+
+        .login-container {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            animation: slideIn 0.6s ease;
+        }
+
+         @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+ 
+        .login-header {
+            margin-bottom: 35px;
+        }
+
+        .login-header h2 {
+            color: #1e3c72;
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .user-type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .user-type {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .user-type:hover {
+            border-color: #2a5298;
+            background: #f8fafc;
+        }
+
+        .user-type.active {
+            border-color: #2a5298;
+            background: #eff6ff;
+        }
+
+        .user-type-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .user-type-label {
+            font-size: 12px;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #334155;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #397ee0;
+            font-size: 18px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 14px 14px 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            outline: none;
+            background: #f8fafc;
+        }
+
+        input:focus {
+            border-color: #2a5298;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(42, 82, 152, 0.1);
+        }
+
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .remember-me input[type="checkbox"] {
+            width: auto;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .forgot-password {
+            color: #2a5298;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .forgot-password:hover {
+            color: #1e3c72;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(30, 60, 114, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .support-link {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid #e2e8f0;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .support-link a {
+            color: #2a5298;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .support-link a:hover {
+            text-decoration: underline;
+        }
+
+        .location-badge{
+            position: relative;
+            left: 90px;
+            top: 20px;
+        }
+
+         .security-badge {
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .security-icon {
+            font-size: 16px;
+        }
+
+        @media (max-width: 968px) {
+            .branding-section {
+                display: none;
+            }
+            
+            .login-section {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 30px 25px;
+            }
+            
+            .user-type-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-pattern"></div>
+    
+    <div class="login-wrapper">
+        <div class="branding-section">
+            <a class="logo-container logo-link" href="landing.html">
+                <div class="logo-icon">🚛</div>
+                <div class="logo-text">
+                    <h1>LogiTrack</h1>
+                    <p>Logistics Management System</p>
+                </div>
+            </a>
+            
+            <div class="features">
+                <div class="feature-item">
+                    <div class="feature-icon">📦</div>
+                    <div class="feature-content">
+                        <h3>Real-Time Tracking</h3>
+                        <p>Monitor your fleet and shipments in real-time with GPS integration and live updates</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-content">
+                        <h3>Advanced Analytics</h3>
+                        <p>Make data-driven decisions with comprehensive reporting and performance insights</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">🔄</div>
+                    <div class="feature-content">
+                        <h3>Seamless Integration</h3>
+                        <p>Connect with your existing systems for streamlined operations and workflows</p>
+                    </div>
+                </div>
+                 
+
+            </div>
+           <div class=" feature-item location-badge">
+                📍 Serving Eldoret, Kenya & Beyond
+            </div>
+        </div>
+        
+        <div class="login-section">
+            <div class="login-container">
+                <div class="login-header">
+                    <h2>..Welcome !!!</h2>
+                    <p style="font-size: 20px;">Sign in to access your dashboard</p>
+                </div>
+                
+                <div class="user-type-selector">
+                    <div class="user-type active" onclick="selectUserType(this, 'admin')">
+                        <div class="user-type-icon">👤</div>
+                        <div class="user-type-label">Admin</div>
+                    </div>
+                    <div class="user-type" onclick="selectUserType(this, 'personnel')">
+                        <div class="user-type-icon">🚗</div>
+                        <div class="user-type-label">Personnel</div>
+                    </div>
+                    <div class="user-type" onclick="selectUserType(this, 'client')">
+                        <div class="user-type-icon">🏢</div>
+                        <div class="user-type-label">Client</div>
+                    </div>
+                </div>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">📧</span>
+                            <input type="email" id="email" placeholder="Enter your email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔑</span>
+                            <input type="password" id="password" placeholder="Enter your password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-footer">
+                        <label class="remember-me">
+                            <input type="checkbox" id="remember">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="#" class="forgot-password" onclick="handleForgotPassword(event)">Forgot Password?</a>
+                    </div>
+                    
+                    <button type="submit">Sign In</button>
+
+                        <div style="margin-top:16px;text-align:center;color:#475569">
+                            Don't have an account? <a href="signup.html" style="color:#2a5298;font-weight:600">Sign up</a>
+                        </div>
+
+                    <div class="security-badge">
+                    <span class="security-icon">🔒</span>
+                    <span>Your connection is secure with end-to-end encryption</span>
+                </div>
+                </form>
+                
+                <div class="support-link">
+                    Need help? <a href="#" onclick="handleSupport(event)">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedUserType = 'admin';
+
+        function selectUserType(element, type) {
+            document.querySelectorAll('.user-type').forEach(el => {
+                el.classList.remove('active');
+            });
+            element.classList.add('active');
+            selectedUserType = type;
+        }
+
+      document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const password = document.getElementById('password').value.trim();
+
+    // check stored users in localStorage
+    const usersKey = 'logitrack_users';
+    const users = JSON.parse(localStorage.getItem(usersKey) || '[]');
+    const match = users.find(u => u.email && u.email.toLowerCase() === email && u.password === password);
+
+    if (!match) {
+        // if email doesn't exist at all, offer signup
+        const existsEmail = users.some(u => u.email && u.email.toLowerCase() === email);
+        if (!existsEmail) {
+            if (confirm('No account found for this email. Would you like to sign up?')) {
+                window.location.href = 'signup.html';
+            }
+            return;
+        }
+        alert('Invalid credentials. Please try again or reset your password.');
+        return;
+    }
+
+    // successful login — redirect based on selected user type
+    if (selectedUserType === 'admin') {
+        window.location.href = 'admindash.html';
+    } else if (selectedUserType === 'personnel') {
+        window.location.href = 'personnel.html';
+    } else {
+        window.location.href = 'client.html';
+    }
+});
+
+
+        function handleForgotPassword(e) {
+            e.preventDefault();
+            alert('Password reset link would be sent to your registered email address.');
+        }
+
+
+        function handleSupport(e) {
+            e.preventDefault();
+            alert('Support Contact:\nEmail: support@logitrack.com\nPhone: +1-800-LOGI-TRK\nAvailable 24/7');
+        }
+    </script>
+</body>
+</html>

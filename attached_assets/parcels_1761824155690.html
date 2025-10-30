@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parcels Management | LogiTrack LMS</title>
+  <style>
+    /* ===== LogiTrack Global Theme ===== */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #638cd7 100%);
+      min-height: 100vh;
+      margin: 0;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .background-pattern {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0.05;
+      background-image: repeating-linear-gradient(0deg, transparent, transparent 50px, #fff 50px, #fff 51px),
+                        repeating-linear-gradient(90deg, transparent, transparent 50px, #fff 50px, #fff 51px);
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    /* ===== Header ===== */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      margin-bottom: 1.5rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+    }
+
+    header button {
+      background: #232991;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #fff;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    header button:hover {
+      background: #303fc4;
+    }
+
+    /* ===== Search & Filter ===== */
+    .filters {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .filters input, .filters select {
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      width: 220px;
+    }
+
+    /* ===== Table ===== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    th, td {
+      padding: 1rem;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(0, 0, 0, 0.3);
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.5px;
+    }
+
+    tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transition: 0.3s;
+    }
+
+    .status {
+      font-weight: 500;
+    }
+
+    .status.in-transit { color: #00d2ff; }
+    .status.delivered { color: #2eff7d; }
+    .status.pending { color: #ffda57; }
+
+    .actions button {
+      margin-right: 0.4rem;
+      background: #232991;
+      border: none;
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      transition: 0.3s;
+      color: #fff;
+    }
+
+    .actions button:hover {
+      background: #5157a3;
+    }
+
+    /* ===== Modal ===== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .modal-content {
+      background: #fff;
+      color: #000;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 400px;
+      max-width: 90%;
+      position: relative;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .modal-content h2 {
+      margin-bottom: 1rem;
+      color: #1e3c72;
+    }
+
+    .modal-content input, .modal-content select {
+      width: 100%;
+      padding: 0.7rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .modal-content button {
+      background: #1e3c72;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1.2rem;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+    }
+
+    .close {
+      position: absolute;
+      right: 15px;
+      top: 10px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #333;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="background-pattern"></div>
+
+  <div class="container">
+    <header>
+      <h1>Parcels Management - LogiTrack LMS</h1>
+      <button onclick="openModal()">+ Add Parcel</button>
+    </header>
+
+    <div class="filters">
+      <input type="text" id="searchInput" placeholder="Search by Parcel ID..." onkeyup="filterTable()">
+      <select id="statusFilter" onchange="filterTable()">
+        <option value="">All Statuses</option>
+        <option value="Pending">Pending</option>
+        <option value="In Transit">In Transit</option>
+        <option value="Delivered">Delivered</option>
+      </select>
+    </div>
+
+    <table id="parcelTable">
+      <thead>
+        <tr>
+          <th>Parcel ID</th>
+          <th>Description</th>
+          <th>Weight (kg)</th>
+          <th>Shipment ID</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="parcelBody">
+        <!-- Dynamic rows -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Add/Edit Modal -->
+  <div class="modal" id="parcelModal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2 id="modalTitle">Add Parcel</h2>
+      <input type="text" id="parcelID" placeholder="Parcel ID (auto or manual)">
+      <input type="text" id="description" placeholder="Description">
+      <input type="number" id="weight" placeholder="Weight (kg)">
+      <input type="text" id="shipment" placeholder="Linked Shipment ID">
+      <select id="status">
+        <option value="Pending">Pending</option>
+        <option value="In Transit">In Transit</option>
+        <option value="Delivered">Delivered</option>
+      </select>
+      <button onclick="saveParcel()">Save Parcel</button>
+    </div>
+  </div>
+
+  <script>
+    let parcels = [
+      { id: "PCL001", description: "Electronics", weight: 2.3, shipment: "SHP123", status: "Pending" },
+      { id: "PCL002", description: "Books", weight: 5.0, shipment: "SHP124", status: "In Transit" },
+      { id: "PCL003", description: "Clothing", weight: 1.2, shipment: "SHP125", status: "Delivered" },
+    ];
+
+    let editIndex = null;
+
+    function renderParcels(list = parcels) {
+      const tbody = document.getElementById("parcelBody");
+      tbody.innerHTML = "";
+      list.forEach((p, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${p.id}</td>
+            <td>${p.description}</td>
+            <td>${p.weight}</td>
+            <td>${p.shipment}</td>
+            <td class="status ${p.status.toLowerCase().replace(' ', '-')}">${p.status}</td>
+            <td class="actions">
+              <button onclick="editParcel(${index})">✏️</button>
+              <button onclick="deleteParcel(${index})">🗑️</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    function openModal(isEdit = false) {
+      document.getElementById("parcelModal").style.display = "flex";
+      document.getElementById("modalTitle").innerText = isEdit ? "Edit Parcel" : "Add Parcel";
+      if (!isEdit) {
+        document.getElementById("parcelID").value = "";
+        document.getElementById("description").value = "";
+        document.getElementById("weight").value = "";
+        document.getElementById("shipment").value = "";
+        document.getElementById("status").value = "Pending";
+        editIndex = null;
+      }
+    }
+
+    function closeModal() {
+      document.getElementById("parcelModal").style.display = "none";
+    }
+
+    function saveParcel() {
+      const id = document.getElementById("parcelID").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const weight = parseFloat(document.getElementById("weight").value);
+      const shipment = document.getElementById("shipment").value.trim();
+      const status = document.getElementById("status").value;
+
+      if (!id || !description || !shipment || isNaN(weight) || weight <= 0) {
+        alert("Please fill all fields correctly. Weight must be a positive number.");
+        return;
+      }
+
+      const duplicate = parcels.some((p, idx) => p.id === id && idx !== editIndex);
+      if (duplicate) {
+        alert("Parcel ID already exists. Use a unique ID.");
+        return;
+      }
+
+      const parcelData = { id, description, weight, shipment, status };
+
+      if (editIndex !== null) {
+        parcels[editIndex] = parcelData;
+        editIndex = null;
+      } else {
+        parcels.push(parcelData);
+      }
+
+      closeModal();
+      renderParcels();
+    }
+
+    function editParcel(index) {
+      editIndex = index;
+      const p = parcels[index];
+      document.getElementById("parcelID").value = p.id;
+      document.getElementById("description").value = p.description;
+      document.getElementById("weight").value = p.weight;
+      document.getElementById("shipment").value = p.shipment;
+      document.getElementById("status").value = p.status;
+      openModal(true);
+    }
+
+    function deleteParcel(index) {
+      if (confirm("Remove parcel " + parcels[index].id + "?")) {
+        parcels.splice(index, 1);
+        renderParcels();
+      }
+    }
+
+    function filterTable() {
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      const statusFilter = document.getElementById("statusFilter").value;
+      const filtered = parcels.filter(p =>
+        p.id.toLowerCase().includes(search) &&
+        (statusFilter === "" || p.status === statusFilter)
+      );
+      renderParcels(filtered);
+    }
+
+    renderParcels();
+  </script>
+</body>
+</html>
+
+

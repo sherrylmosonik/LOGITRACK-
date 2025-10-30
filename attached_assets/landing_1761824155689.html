@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>LogiTrack — Smart Logistics</title>
+    <meta name="theme-color" content="#1e3c72">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{--bg:#0f172a;--card:#fff;--brand-600:#1e3c72;--brand-700:#2a5298;--muted:#94a3b8}
+        *{box-sizing:border-box}
+        body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:#0b1220;background:linear-gradient(180deg,#f8fafc,#eef2ff);-webkit-font-smoothing:antialiased}
+        a{color:inherit;text-decoration:none}
+        .container{max-width:1200px;margin:0 auto;padding:0 20px}
+
+    /* NAV */
+    /* make the nav fixed so it stays at the top while scrolling */
+    nav{position:fixed;top:0;left:0;width:100%;backdrop-filter:blur(6px);background:rgba(255,255,255,.82);border-bottom:1px solid rgba(2,6,23,.06);z-index:1000;transition:transform .28s ease,background .18s}
+    /* when hiding the nav (scroll down) we translate it up visually while keeping layout spacing */
+    nav.nav-hidden{transform:translateY(-110%)}
+        .nav-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
+        .brand{display:flex;align-items:center;gap:12px}
+        .brand .logo-svg{width:36px;height:36px;background:linear-gradient(90deg,var(--brand-600),var(--brand-700));border-radius:8px;display:grid;place-items:center;color:white;font-weight:800}
+        .brand .title{font-weight:800;color:#0b1220}
+        .nav-links{display:flex;gap:18px;align-items:center}
+        .nav-links a{font-weight:600;color:#0b1220;padding:6px 8px;border-radius:8px}
+        .nav-links a:hover{background:rgba(30,60,114,.06)}
+        .nav-cta{display:flex;gap:10px;align-items:center}
+        .btn{padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer;border:0}
+        .btn-primary{background:linear-gradient(90deg,var(--brand-600),var(--brand-700));color:white}
+        .btn-outline{background:transparent;border:2px solid rgba(11,18,32,.06);color:#0b1220}
+        .mobile-toggle{display:none}
+
+        /* HERO */
+        .hero{display:grid;grid-template-columns:1fr 480px;gap:36px;align-items:center;padding:96px 0;position:relative}
+        @media(max-width:980px){.hero{grid-template-columns:1fr}.nav-links{display:none}.mobile-toggle{display:block}}
+        .hero-left{padding-right:12px}
+        .app-badge{display:inline-flex;align-items:center;gap:10px;padding:8px 12px;border-radius:999px;background:linear-gradient(90deg,rgba(30,60,114,.06),rgba(42,82,152,.04));font-weight:700;color:var(--brand-700);width:max-content}
+        .hero-title{font-size:38px;line-height:1.05;margin:18px 0 12px;color:#07112a}
+        .hero-lead{color:var(--muted);margin-bottom:18px;font-size:20px}
+        .hero-actions{display:flex;gap:12px;flex-wrap:wrap}
+        .visual{border-radius:14px;overflow:hidden;box-shadow:0 30px 60px rgba(2,6,23,.08);background:#fff}
+        .visual img{width:100%;display:block;height:360px;object-fit:cover}
+
+        /* Live background overlay (SVG) */
+        /* live background placed as a full-page fixed overlay so it shows behind all sections */
+        .live-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.16}
+    /* ensure page chrome and content sit above the overlay */
+    /* nav is intentionally fixed (see rule above) so exclude it here */
+    main, footer{position:relative;z-index:2}
+
+    /* push the page content down so it doesn't sit under the fixed nav */
+    main{margin-top:72px}
+        .hero-left, .visual{position:relative;z-index:3}
+        .live-path{fill:none;stroke:rgba(42,82,152,.12);stroke-width:2}
+        .live-truck{font-size:20px}
+
+        /* live accent animation */
+        .pulse{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--brand-600);box-shadow:0 0 0 rgba(30,60,114,0.3);animation:pulse 2s infinite}
+        @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(30,60,114,0.35)}70%{box-shadow:0 0 0 20px rgba(30,60,114,0)}100%{box-shadow:0 0 0 0 rgba(30,60,114,0)}}
+
+        /* sections */
+        section{padding:72px 0;position:relative;overflow:visible}
+        .section-live{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.12}
+        .section .card, .section .section-header, .section .testimonials, .section .contact-form{position:relative;z-index:2}
+        .section-header{max-width:900px;margin:0 auto 36px;text-align:center}
+        .section-header h2{font-size:28px;color:var(--brand-700);margin-bottom:8px}
+        .section-header p{color:var(--muted)}
+
+        .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+        @media(max-width:980px){.grid-3{grid-template-columns:1fr}}
+        .card{background:var(--card);padding:22px;border-radius:12px;box-shadow:0 12px 40px rgba(2,6,23,.06);transition:transform .28s}
+        .card:hover{transform:translateY(-6px)}
+        .icon{width:56px;height:56px;border-radius:10px;display:grid;place-items:center;font-size:26px}
+
+        /* How it works (3 user categories) */
+        .who-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+        @media(max-width:980px){.who-grid{grid-template-columns:1fr}}
+        .who .role{font-weight:700;margin-bottom:8px;color:#0b1220}
+        .who .steps{color:var(--muted);font-size:14px}
+
+        /* Testimonials */
+        .testimonials{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+        @media(max-width:980px){.testimonials{grid-template-columns:1fr}}
+        .testimonial{background:linear-gradient(180deg,#0f172a,#0b1220);color:#fff;padding:20px;border-radius:12px}
+
+        /* Contact */
+        .contact-row{display:grid;grid-template-columns:1fr 420px;gap:24px}
+        @media(max-width:980px){.contact-row{grid-template-columns:1fr}}
+        .contact-form input,.contact-form textarea{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(2,6,23,.06);margin-bottom:8px}
+
+        footer{padding:36px 0;background:#07112a;color:#cbd5e1}
+
+        /* reveal */
+        .reveal{opacity:0;transform:translateY(16px);transition:all .6s ease}
+        .reveal.visible{opacity:1;transform:none}
+    </style>
+</head>
+<body>
+    <!-- Full-page live shipments background overlay (SVG) -->
+    <svg class="live-bg" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1200 1200">
+        <defs>
+            <path id="route1" d="M60,980 C260,840 380,420 560,540 C740,660 860,300 1120,420" />
+            <path id="route2" d="M40,1100 C220,940 340,560 520,660 C700,760 860,480 1120,600" />
+            <path id="route3" d="M120,760 C260,680 420,480 600,520 C780,560 920,420 1080,460" />
+        </defs>
+        <g id="routes" stroke="none" fill="none">
+            <use xlink:href="#route1" class="live-path" />
+            <use xlink:href="#route2" class="live-path" />
+            <use xlink:href="#route3" class="live-path" />
+        </g>
+        <g id="truck-layer"></g>
+    </svg>
+    <nav>
+        <div class="container nav-inner">
+            <div class="brand">
+                <div class="logo-svg">LT</div>
+                <div class="title">LogiTrack</div>
+            </div>
+            <div class="nav-links">
+                <a href="#about">About us</a>
+                <a href="#services">Services</a>
+                <a href="#how-it-works">How it works</a>
+                <a href="#testimonials">Testimonials</a>
+                <a href="#contact">Contact us</a>
+            </div>
+            <div class="nav-cta">
+                <a class="btn btn-outline" href="signup.html">Sign up</a>
+                <a class="btn btn-primary" href="login.html">Get Started</a>
+                <button class="mobile-toggle" aria-label="menu">☰</button>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <header class="container hero">
+            <div class="hero-left reveal">
+                <div class="app-badge"><span class="pulse" aria-hidden></span> Smart logistics · Mobile & Web</div>
+                <h1 class="hero-title">LogiTrack — Fast, <br> transparent deliveries <br> with live tracking</h1>
+                
+                <p class="hero-lead">Manage shipments, <br> track drivers in real-time and accept payments on <br> delivery. Designed for shippers, dispatchers and drivers.</p>
+                
+                <!-- <div style="margin-top:20px;color:var(--brand-700);font-size:19px">Trusted by regional carriers · </div> -->
+            </div>
+
+                            <aside class="visual reveal">
+                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTHJ0ml22HU0q0vI0wdzCt6LiKI6v6g7Yho0A&s" alt="Shipments and delivery trucks in a warehouse">
+                            </aside>
+        </header>
+
+        <section id="services">
+                <!-- live background for this section -->
+                <svg class="section-live" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1200 220">
+                    <defs>
+                        <path id="s-route1" d="M40,180 C220,140 380,60 560,100 C740,140 860,60 1120,100" />
+                        <path id="s-route2" d="M20,200 C200,160 340,100 520,120 C700,140 860,100 1120,120" />
+                    </defs>
+                    <g id="s-routes" stroke="none" fill="none">
+                        <use xlink:href="#s-route1" class="live-path" />
+                        <use xlink:href="#s-route2" class="live-path" />
+                    </g>
+                    <g id="s-truck-layer"></g>
+                </svg>
+            <div class="section-header reveal">
+                <h2>Services we offer</h2>
+                <p>Flexible services tailored to different business needs: last-mile delivery, B2B logistics and fleet operations.</p>
+            </div>
+            <div class="container grid-3">
+                <div class="card reveal">
+                    <div class="icon">📦</div>
+                    <h3>Parcel & last-mile delivery</h3>
+                    <p style="color:var(--muted)">Pickup scheduling, proof-of-delivery and customer notifications for fast deliveries.</p>
+                </div>
+                <div class="card reveal" style="transition-delay:.06s">
+                    <div class="icon">🗺️</div>
+                    <h3>Route optimization</h3>
+                    <p style="color:var(--muted)">Optimize driver routes to reduce fuel and time — integrates with maps for routing and ETA.</p>
+                </div>
+                <div class="card reveal" style="transition-delay:.12s">
+                    <div class="icon">👥</div>
+                    <h3>Fleet & personnel management</h3>
+                    <p style="color:var(--muted)">Driver assignments, shift management and role-based access controls for teams.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="how-it-works">
+                <!-- live background for this section -->
+                <svg class="section-live" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1200 220">
+                    <defs>
+                        <path id="w-route1" d="M60,160 C240,120 420,80 600,100 C780,120 940,80 1080,100" />
+                    </defs>
+                    <g stroke="none" fill="none">
+                        <use xlink:href="#w-route1" class="live-path" />
+                    </g>
+                    <g id="w-truck-layer"></g>
+                </svg>
+            <div class="section-header reveal">
+                <h2>How the app works — by user</h2>
+                <p>Three tailored experiences for the people who use LogiTrack every day.</p>
+            </div>
+            <div class="container who-grid">
+                <div class="card who reveal">
+                    <div class="icon">🏢</div>
+                    <div class="role">Shippers / Clients</div>
+                    <div class="steps">Request a pickup → Choose pay-on-delivery or prepaid → Track delivery and get proof of delivery.</div>
+                </div>
+                <div class="card who reveal" style="transition-delay:.06s">
+                    <div class="icon">⚙️</div>
+                    <div class="role">Dispatchers / Admins</div>
+                    <div class="steps">Create shipments → assign drivers → monitor live fleet telemetry and export reports.</div>
+                </div>
+                <div class="card who reveal" style="transition-delay:.12s">
+                    <div class="icon">🚚</div>
+                    <div class="role">Drivers / Personnel</div>
+                    <div class="steps">Receive assignments on mobile → navigate routes → capture signatures and mark deliveries.</div>
+                </div>
+            </div>
+        </section>
+
+        <section id="testimonials">
+                <!-- live background for this section -->
+                <svg class="section-live" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1200 220">
+                    <defs>
+                        <path id="t-route1" d="M80,180 C260,140 420,100 600,120 C780,140 920,100 1080,120" />
+                    </defs>
+                    <g stroke="none" fill="none">
+                        <use xlink:href="#t-route1" class="live-path" />
+                    </g>
+                    <g id="t-truck-layer"></g>
+                </svg>
+            <div class="section-header reveal">
+                <h2>Testimonials</h2>
+                <p>What users say about LogiTrack.</p>
+            </div>
+            <div class="container testimonials">
+                <div class="testimonial reveal">
+                    <strong>"LogiTrack cut our delivery times by 30% and gave us full visibility."</strong>
+                    <p style="opacity:.9;margin-top:12px">— James, Operations Manager</p>
+                </div>
+                <div class="testimonial reveal" style="transition-delay:.06s">
+                    <strong>"Easy for drivers and clients; the mobile flow is excellent."</strong>
+                    <p style="opacity:.9;margin-top:12px">— Mary, CEO</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="about">
+                <!-- live background for this section -->
+                <svg class="section-live" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1200 220">
+                    <defs>
+                        <path id="a-route1" d="M40,160 C220,120 380,80 560,100 C740,120 860,80 1120,100" />
+                    </defs>
+                    <g stroke="none" fill="none">
+                        <use xlink:href="#a-route1" class="live-path" />
+                    </g>
+                    <g id="a-truck-layer"></g>
+                </svg>
+            <div class="section-header reveal">
+                <h2>About us</h2>
+                <p>LogiTrack helps you track deliveries, manage personnel, and keep your logistics running smoothly — all in one platform.</p>
+            </div>
+            <div class="container">
+                <div class="card reveal" style="max-width:920px;margin:0 auto;text-align:center">
+                    <p style="color:var(--muted)">Founded locally with a focus on fast onboarding, LogiTrack helps operators move more parcels with less friction. We integrate with popular mapping services and provide a simple dashboard for dispatchers.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact">
+                <!-- live background for this section -->
+                <svg class="section-live" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1200 220">
+                    <defs>
+                        <path id="c-route1" d="M20,200 C200,160 360,120 540,140 C720,160 900,120 1120,140" />
+                    </defs>
+                    <g stroke="none" fill="none">
+                        <use xlink:href="#c-route1" class="live-path" />
+                    </g>
+                    <g id="c-truck-layer"></g>
+                </svg>
+            <div class="section-header reveal">
+                <h2>Contact us</h2>
+                <p>Questions? Want a demo? Drop us a message and we'll get back to you.</p>
+            </div>
+            <div class="container contact-row">
+                <div class="card contact-form reveal">
+                    <input id="c_name" placeholder="Your name" />
+                    <input id="c_email" placeholder="Email or phone" />
+                    <textarea id="c_message" rows="4" placeholder="How can we help?"></textarea>
+                    <div style="display:flex;gap:8px;justify-content:flex-end">
+                        <button class="btn btn-outline" onclick="document.getElementById('c_name').value='';document.getElementById('c_email').value='';document.getElementById('c_message').value=''">Reset</button>
+                        <button class="btn btn-primary" onclick="sendContact()">Send message</button>
+                    </div>
+                </div>
+
+                <aside class="card reveal" style="display:flex;flex-direction:column;gap:12px;justify-content:center">
+                    <div><strong>Office</strong><div style="color:var(--muted)">Eldoret, Kenya</div></div>
+                    <div><strong>Email</strong><div style="color:var(--muted)">support@logitrack.local</div></div>
+                    <div><strong>Phone</strong><div style="color:var(--muted)">+254 7XX XXX XXX</div></div>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:12px">
+                <div class="logo-svg">LT</div>
+                <div>
+                    <div style="font-weight:800;color:#fff">LogiTrack</div>
+                    <div style="font-size:13px;color:#94a3b8">Serving Eldoret & Beyond — © 2025</div>
+                </div>
+            </div>
+            <div style="font-size:14px;color:#94a3b8">Made with ❤️ by LogiTrack Team</div>
+
+        </div>
+    </footer>
+
+    <script>
+        // reveal on scroll
+        const io = new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target) } }) },{threshold:.12});
+        document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+        // simple mobile toggle — position the dropdown right below the nav using the nav height
+        const toggle = document.querySelector('.mobile-toggle');
+        toggle && toggle.addEventListener('click', ()=>{
+            const links = document.querySelector('.nav-links');
+            const navEl = document.querySelector('nav');
+            const navH = navEl ? navEl.offsetHeight : 64;
+            if(getComputedStyle(links).display === 'none'){ 
+                links.style.display='flex'; 
+                links.style.flexDirection='column'; 
+                links.style.position='absolute'; 
+                links.style.right='20px'; 
+                links.style.top = navH + 'px'; 
+                links.style.background='white'; 
+                links.style.padding='12px'; 
+                links.style.borderRadius='8px'; 
+                links.style.boxShadow='0 8px 30px rgba(2,6,23,.12)'; 
+            } else { links.style.display='none' }
+        });
+
+        // contact (simulated)
+        function sendContact(){
+            const name = document.getElementById('c_name').value.trim();
+            const contact = document.getElementById('c_email').value.trim();
+            const msg = document.getElementById('c_message').value.trim();
+            if(!name || !contact || !msg) return alert('Please fill all fields');
+            // simulate send
+            alert('Message sent — we will contact you within 24 hours.');
+            document.getElementById('c_name').value=''; document.getElementById('c_email').value=''; document.getElementById('c_message').value='';
+        }
+
+        // Live background animation: initialize for all overlays (.live-bg and .section-live)
+        (function initLiveBgAll(){
+            try{
+                const svgs = Array.from(document.querySelectorAll('.live-bg, .section-live'));
+                if(!svgs.length) return;
+
+                const allTrucks = [];
+                const vw = window.innerWidth || 1200;
+                const truckCountBase = vw < 700 ? 1 : 3;
+
+                function makeTruckGroup(svg){
+                    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+                    g.setAttribute('class','live-truck');
+                    const body = document.createElementNS('http://www.w3.org/2000/svg','rect');
+                    body.setAttribute('x','-12'); body.setAttribute('y','-6'); body.setAttribute('width','24'); body.setAttribute('height','12'); body.setAttribute('rx','2'); body.setAttribute('fill','#1e3c72');
+                    const cab = document.createElementNS('http://www.w3.org/2000/svg','rect'); cab.setAttribute('x','6'); cab.setAttribute('y','-8'); cab.setAttribute('width','8'); cab.setAttribute('height','10'); cab.setAttribute('rx','1.5'); cab.setAttribute('fill','#94a3b8');
+                    const w1 = document.createElementNS('http://www.w3.org/2000/svg','circle'); w1.setAttribute('r','2'); w1.setAttribute('cx','-6'); w1.setAttribute('cy','8'); w1.setAttribute('fill','#0b1220');
+                    const w2 = document.createElementNS('http://www.w3.org/2000/svg','circle'); w2.setAttribute('r','2'); w2.setAttribute('cx','6'); w2.setAttribute('cy','8'); w2.setAttribute('fill','#0b1220');
+                    g.appendChild(body); g.appendChild(cab); g.appendChild(w1); g.appendChild(w2);
+                    return g;
+                }
+
+                svgs.forEach((svg)=>{
+                    const routeUses = svg.querySelectorAll('use');
+                    const truckLayer = svg.querySelector('g[id$="truck-layer"]') || svg.querySelector('g');
+                    const localPaths = Array.from(routeUses).map(u=>{
+                        const href = u.getAttribute('xlink:href') || u.getAttribute('href');
+                        return svg.querySelector(href);
+                    }).filter(Boolean);
+
+                    const localCount = truckCountBase + Math.floor(Math.random()*2);
+                    for(let i=0;i<localCount;i++){
+                        const path = localPaths[i % localPaths.length];
+                        if(!path) continue;
+                        const len = path.getTotalLength();
+                        const g = makeTruckGroup(truckLayer);
+                        truckLayer.appendChild(g);
+                        const start = Math.random()*len;
+                        const speed = 20 + Math.random()*60;
+                        allTrucks.push({el:g,path:path,len:len,offset:start,speed:speed});
+                    }
+                });
+
+                let last = performance.now();
+                function frame(now){
+                    const dt = (now - last)/1000; last = now;
+                    allTrucks.forEach(t=>{
+                        t.offset += t.speed * dt;
+                        if(t.offset > t.len) t.offset -= t.len;
+                        const p = t.path.getPointAtLength(t.offset);
+                        const look = t.offset + Math.min(12, t.len);
+                        const p2 = t.path.getPointAtLength(look > t.len ? look - t.len : look);
+                        const angle = Math.atan2(p2.y - p.y, p2.x - p.x) * 180/Math.PI;
+                        t.el.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${angle})`);
+                    });
+                    requestAnimationFrame(frame);
+                }
+                requestAnimationFrame(frame);
+
+                // reduce animations when tab is hidden
+                document.addEventListener('visibilitychange', ()=>{
+                    if(document.hidden){ /* RAF will naturally throttle */ }
+                });
+            }catch(err){ console.warn('live-bg init failed', err); }
+        })();
+
+        /* Dynamic nav spacing and hide-on-scroll */
+        (function setupNavBehavior(){
+            const nav = document.querySelector('nav');
+            const main = document.querySelector('main');
+            if(!nav || !main) return;
+
+            function updateSpacing(){
+                const h = nav.offsetHeight;
+                main.style.marginTop = h + 'px';
+            }
+            // set initially and on resize
+            updateSpacing();
+            window.addEventListener('resize', updateSpacing);
+
+            // hide-on-scroll: translate nav up when scrolling down, show when scrolling up
+            let lastScroll = window.scrollY;
+            let ticking = false;
+            window.addEventListener('scroll', ()=>{
+                if(!ticking){
+                    window.requestAnimationFrame(()=>{
+                        const current = window.scrollY;
+                        // only toggle when movement is noticeable
+                        if(current > lastScroll + 10 && current > nav.offsetHeight){
+                            nav.classList.add('nav-hidden');
+                        } else if(current < lastScroll - 10){
+                            nav.classList.remove('nav-hidden');
+                        }
+                        lastScroll = current;
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, {passive: true});
+        })();
+    </script>
+</body>
+</html>

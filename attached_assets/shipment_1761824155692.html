@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LogiTrack | Shipments Management</title>
+
+  <style>
+    /* ================================================
+       GLOBAL STYLES
+    ================================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #638cd7 100%);
+      color: #1e293b;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .background-pattern {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      opacity: 0.05;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 50px, #fff 50px, #fff 51px),
+        repeating-linear-gradient(90deg, transparent, transparent 50px, #fff 50px, #fff 51px);
+      z-index: 0;
+    }
+    button{
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 10px;
+    }
+
+
+
+    .content-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1200px;
+      margin: auto;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #fff;
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    p.subtitle {
+      color: #e2e8f0;
+      margin-bottom: 25px;
+      font-size: 15px;
+    }
+
+    /* ================================================
+       CARD STYLES
+    ================================================== */
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: #1e3c72;
+      color: #fff;
+      padding: 1rem 1.5rem;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-body {
+      padding: 1.5rem;
+    }
+
+    /* ================================================
+       FILTERS + ACTIONS
+    ================================================== */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      gap: 1rem;
+    }
+
+    .filters {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filters input,
+    .filters select {
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .filters input:focus,
+    .filters select:focus {
+      border-color: #1e3c72;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+
+    .btn-primary {
+      background: #1e3c72;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #2a5298;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .btn-secondary:hover {
+      background: #cbd5e1;
+    }
+
+    /* ================================================
+       TABLE STYLES
+    ================================================== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    tr:hover {
+      background: #f1f5f9;
+    }
+
+    .status {
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .status.pending { background: #fef9c3; color: #92400e; }
+    .status.in-transit { background: #dbeafe; color: #1d4ed8; }
+    .status.delivered { background: #dcfce7; color: #166534; }
+    .status.delayed { background: #fee2e2; color: #b91c1c; }
+
+    /* ================================================
+       FORM + MODAL STYLES
+    ================================================== */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1e3c72;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #475569;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #334155;
+    }
+
+    input, select, textarea {
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #1e3c72;
+      box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+    }
+
+    .form-actions {
+      grid-column: span 2;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="background-pattern"></div>
+
+  <div class="content-wrapper">
+    <h1>📦 Shipments Management</h1>
+    <p class="subtitle">Manage, create, and update logistics shipments efficiently</p>
+
+    <div class="card">
+      <div class="card-header">
+        Shipments Overview
+        <button class="btn-primary" onclick="openAddModal()">➕ Add Shipment</button>
+      </div>
+      <div class="card-body">
+        <div class="actions">
+          <div class="filters">
+            <input type="text" id="searchInput" placeholder="Search by tracking no..." onkeyup="filterShipments()">
+            <select id="statusFilter" onchange="filterShipments()">
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="in-transit">In Transit</option>
+              <option value="delivered">Delivered</option>
+              <option value="delayed">Delayed</option>
+            </select>
+          </div>
+        </div>
+
+        <table id="shipmentsTable">
+          <thead>
+            <tr>
+              <th>Tracking No.</th>
+              <th>Category</th>
+              <th>Origin</th>
+              <th>Destination</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Personnel</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD MODAL -->
+  <div id="addModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        Add New Shipment
+        <button class="close-btn" onclick="closeAddModal()">✖</button>
+      </div>
+      <form id="addForm">
+        <div>
+          <label>Tracking No.</label>
+          <input type="text" id="newTracking" disabled style="background: #f8fafc;">
+          <small style="color: #64748b; display: block; margin-top: 4px;">Auto-generated on save</small>
+        </div>
+        <div>
+          <label>Origin</label>
+          <input type="text" id="newOrigin" required>
+        </div>
+        <div>
+          <label>Destination</label>
+          <input type="text" id="newDestination" required>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="newStatus">
+            <option value="pending">Pending</option>
+            <option value="in-transit">In Transit</option>
+            <option value="delivered">Delivered</option>
+            <option value="delayed">Delayed</option>
+          </select>
+        </div>
+        <div>
+          <label>Personnel</label>
+          <input type="text" id="newPersonnel">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" onclick="closeAddModal()">Cancel</button>
+          <button type="button" class="btn-primary" onclick="addShipment()">Add Shipment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EDIT MODAL -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        Edit Shipment
+        <button class="close-btn" onclick="closeEditModal()">✖</button>
+      </div>
+      <form id="editForm">
+        <div>
+          <label>Origin</label>
+          <input type="text" id="editOrigin" required>
+        </div>
+        <div>
+          <label>Destination</label>
+          <input type="text" id="editDestination" required>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="editStatus">
+            <option value="pending">Pending</option>
+            <option value="in-transit">In Transit</option>
+            <option value="delivered">Delivered</option>
+            <option value="delayed">Delayed</option>
+          </select>
+        </div>
+        <div>
+          <label>Personnel</label>
+          <input type="text" id="editPersonnel">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="button" class="btn-primary" onclick="saveChanges()">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // shared storage key with client portal
+    const STORAGE_KEY = 'logitrack_shipments_v1';
+
+    // initial seed shipments
+    let shipments = [
+      { tracking: "#SHP-2025-0001", origin: "Eldoret", destination: "Nairobi", status: "in-transit", personnel: "Milly" },
+      { tracking: "#SHP-2025-0002", origin: "Eldoret", destination: "Kisumu", status: "pending", personnel: "John" },
+      { tracking: "#SHP-2025-0003", origin: "Eldoret", destination: "Mombasa", status: "delivered", personnel: "Faith" },
+    ];
+
+    // merge persisted requests (from client) into shipments, avoiding duplicates
+    (function mergeSaved() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        if (Array.isArray(saved) && saved.length) {
+          const map = new Map();
+          // seed with initial shipments
+          shipments.forEach(s => map.set(s.tracking, s));
+          // overlay saved (client requests) - these may include extra fields like category, eta, payment
+          saved.forEach(s => {
+            if (s.tracking) map.set(s.tracking, Object.assign({}, map.get(s.tracking) || {}, s));
+          });
+          shipments = Array.from(map.values());
+        }
+      } catch (e) {
+        console.error('Failed to load saved shipments', e);
+      }
+    })();
+
+    function saveShipments() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(shipments));
+      } catch (e) {
+        console.error('Failed to save shipments', e);
+      }
+    }
+
+    // listen for external changes (other tab/page) and merge updates
+    window.addEventListener('storage', (e) => {
+      if (e.key === STORAGE_KEY) {
+        try {
+          const saved = JSON.parse(e.newValue || '[]');
+          const map = new Map();
+          shipments.forEach(s => map.set(s.tracking, s));
+          saved.forEach(s => { if (s.tracking) map.set(s.tracking, Object.assign({}, map.get(s.tracking) || {}, s)); });
+          shipments = Array.from(map.values());
+          renderShipments();
+        } catch (err) { console.error('Failed to sync shipments', err); }
+      }
+    });
+
+    // Function to generate the next tracking number
+    function generateNextTrackingNumber() {
+      const prefix = "#SHP-2025-";
+      let maxNumber = 0;
+      
+      // Find the highest number in existing tracking numbers
+      shipments.forEach(s => {
+        const num = parseInt(s.tracking.replace(prefix, ""));
+        if (!isNaN(num) && num > maxNumber) {
+          maxNumber = num;
+        }
+      });
+      
+      // Generate next number with padding
+      const nextNumber = (maxNumber + 1).toString().padStart(4, "0");
+      return `${prefix}${nextNumber}`;
+    }
+
+    // Update tracking number field when modal opens
+    function updateTrackingPreview() {
+      const nextTracking = generateNextTrackingNumber();
+      document.getElementById("newTracking").value = nextTracking;
+    }
+
+    let currentEditId = null;
+
+    function renderShipments(data = shipments) {
+      const tbody = document.querySelector("#shipmentsTable tbody");
+      tbody.innerHTML = data.map(s => `
+        <tr>
+          <td>${s.tracking}</td>
+          <td>${s.category ? s.category : ''}</td>
+          <td>${s.origin || ''}</td>
+          <td>${s.destination || ''}</td>
+          <td><span class="status ${s.status}">${s.status}</span></td>
+          <td>${s.payment ? s.payment : ''}</td>
+          <td>${s.personnel ? s.personnel : ''}</td>
+          <td>
+            <button class="btn-secondary" onclick="editShipment('${s.tracking}')">✏️ Edit</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterShipments() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const status = document.getElementById("statusFilter").value;
+      const filtered = shipments.filter(s =>
+        (status === "all" || s.status === status) &&
+        s.tracking.toLowerCase().includes(query)
+      );
+      renderShipments(filtered);
+    }
+
+    function openAddModal() {
+      document.getElementById("addModal").style.display = "flex";
+      updateTrackingPreview(); // Show next tracking number
+    }
+
+    function closeAddModal() {
+      document.getElementById("addModal").style.display = "none";
+      document.getElementById("addForm").reset();
+    }
+
+    function addShipment() {
+      const tracking = generateNextTrackingNumber(); // Generate new tracking number
+      const origin = document.getElementById("newOrigin").value;
+      const destination = document.getElementById("newDestination").value;
+      const status = document.getElementById("newStatus").value;
+      const personnel = document.getElementById("newPersonnel").value;
+
+      if (!tracking || !origin || !destination) return alert("Please fill all required fields.");
+
+      const item = { tracking, origin, destination, status, personnel };
+      shipments.push(item);
+      saveShipments();
+      closeAddModal();
+      renderShipments();
+    }
+
+    function editShipment(id) {
+      const shipment = shipments.find(s => s.tracking === id);
+      if (!shipment) return;
+
+      currentEditId = id;
+      document.getElementById("editOrigin").value = shipment.origin;
+      document.getElementById("editDestination").value = shipment.destination;
+      document.getElementById("editStatus").value = shipment.status;
+      document.getElementById("editPersonnel").value = shipment.personnel;
+
+      document.getElementById("editModal").style.display = "flex";
+    }
+
+    function closeEditModal() {
+      document.getElementById("editModal").style.display = "none";
+    }
+
+    function saveChanges() {
+      const shipment = shipments.find(s => s.tracking === currentEditId);
+      if (shipment) {
+        shipment.origin = document.getElementById("editOrigin").value;
+        shipment.destination = document.getElementById("editDestination").value;
+        shipment.status = document.getElementById("editStatus").value;
+        shipment.personnel = document.getElementById("editPersonnel").value;
+      }
+      saveShipments();
+      closeEditModal();
+      renderShipments();
+    }
+
+    window.onclick = function(e) {
+      if (e.target === document.getElementById("addModal")) closeAddModal();
+      if (e.target === document.getElementById("editModal")) closeEditModal();
+    }
+
+    renderShipments();
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Client Portal · LogiTrack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root{--brand-600:#1e3c72;--brand-700:#2a5298;--glass:rgba(255,255,255,.06)}
+    *{box-sizing:border-box}
+        @keyframes gradientAnimation {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    @keyframes floatingBubbles {
+      0% {
+        transform: translateY(0) translateX(0);
+      }
+      50% {
+        transform: translateY(-20px) translateX(10px);
+      }
+      100% {
+        transform: translateY(0) translateX(0);
+      }
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298, #638cd7, #2a5298, #1e3c72);
+      background-size: 400% 400%;
+      animation: gradientAnimation 15s ease infinite;
+      color: #fff;
+      overflow-y: auto;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .floating-bubble {
+      position: fixed;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1), transparent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      animation: floatingBubbles 8s infinite;
+    }
+
+    .floating-bubble:nth-child(1) {
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .floating-bubble:nth-child(2) {
+      top: 60%;
+      left: 80%;
+      animation-delay: -2s;
+    }
+
+    .floating-bubble:nth-child(3) {
+      top: 80%;
+      left: 30%;
+      animation-delay: -4s;
+    }
+    .container{max-width:1100px;margin:24px auto;padding:18px}
+    header{display:flex;flex-direction:column;gap:6px;align-items:center;margin-bottom:18px}
+    h1{margin:0;font-size:25px}
+    p.lead{opacity:.9;margin:0}
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    @media(max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(2,6,23,.2);
+      margin-bottom: 0;
+      overflow: hidden;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(2,6,23,.3);
+    }
+
+    .card.expanded {
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      padding: 20px;
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.3s ease;
+    }
+
+    .card-header:hover {
+      background: rgba(255,255,255,.12);
+    }
+
+    .card-header h3 {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.1rem;
+    }
+
+    .card-header i {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    .card-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 20px;
+      opacity: 0;
+    }
+
+    .card.expanded .card-content {
+      max-height: 2000px;
+      padding: 20px;
+      opacity: 1;
+    }
+
+    .card-toggle {
+      transition: transform 0.3s ease;
+    }
+
+    .card.expanded .card-toggle {
+      transform: rotate(180deg);
+    }
+
+    /* Section icons */
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* card */
+    .card {
+      background: linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(2,6,23,.2);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px;
+      background: rgba(255,255,255,.08);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background 0.3s ease;
+    }
+
+    .card-header:hover {
+      background: rgba(255,255,255,.12);
+    }
+
+    .card-header h3 {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease-out, padding 0.3s ease;
+      padding: 0 16px;
+    }
+
+    .card.expanded .card-content {
+      max-height: 2000px;
+      padding: 16px;
+    }
+
+    .card-toggle {
+      transition: transform 0.3s ease;
+    }
+
+    .card.expanded .card-toggle {
+      transform: rotate(180deg);
+    }
+
+    /* request form */
+    .form-row{display:flex;gap:8px;margin-bottom:10px}
+    .form-row input, textarea{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:transparent;color:#fff}
+    /* dropdowns: black text by default, white on hover/focus, keep same background */
+    .form-row select{
+      flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:transparent;color:#111;
+    }
+    .form-row select:hover, .form-row select:focus{
+      color:#fff; /* text becomes white on hover/focus */
+      background:transparent; /* keep same background */
+    }
+    /* options styling is limited by browser, but try to set readable defaults */
+    .form-row select option{ color:#111; background:transparent }
+    .form-row select option:hover{ color:#fff; background:transparent }
+    label{font-size:16px;font-weight:400;color: #e6eefc;display:block;margin-bottom:6px}
+    button.btn {
+      padding: 12px 24px;
+      border-radius: 12px;
+      border: 0;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+    }
+
+    .btn i {
+      font-size: 1.1em;
+      transition: transform 0.3s ease;
+    }
+
+    .btn:hover i {
+      transform: translateX(3px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--brand-600), var(--brand-700));
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(46, 91, 255, 0.2);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(46, 91, 255, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .btn-ghost:active {
+      transform: translateY(0);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    /* Animation for new buttons */
+    @keyframes buttonPop {
+      0% { transform: scale(0.95); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+
+    .btn-new {
+      animation: buttonPop 0.3s ease-out;
+    }
+
+    /* requests list */
+    .requests{margin-top:12px}
+    .req {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      background: rgba(0,0,0,.12);
+      position: relative;
+    }
+
+    .req .meta {
+      font-size: 13px;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .badge.pending {
+      background: #f59e0b;
+      color: #111;
+    }
+
+    .badge.paid {
+      background: #10b981;
+      color: #fff;
+    }
+
+    .small {
+      font-size: 12px;
+      opacity: .85;
+    }
+
+    /* Options Menu Styling */
+    .options-menu {
+      position: relative;
+      display: inline-block;
+    }
+
+    .options-toggle {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: white;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .options-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .options-content {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      padding: 8px;
+      min-width: 160px;
+      z-index: 1000;
+      display: none;
+      backdrop-filter: blur(10px);
+      margin-top: 5px;
+    }
+
+    .options-content.show {
+      display: block;
+      animation: menuPopup 0.3s ease;
+    }
+
+    @keyframes menuPopup {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .option-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      color: #1e3c72;
+      text-decoration: none;
+      border-radius: 6px;
+      transition: background 0.2s ease;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .option-item:hover {
+      background: rgba(30, 60, 114, 0.1);
+    }
+
+    .option-item i {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* map */
+    #map{height:420px;border-radius:10px;overflow:hidden}
+
+  /* truck marker style (uses emoji via divIcon) */
+  .truck-icon{font-size:26px;line-height:26px;text-shadow:0 1px 0 rgba(0,0,0,.3)}
+
+    /* tracking search */
+    .track-row{display:flex;gap:8px;margin-bottom:12px}
+    .track-row input{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:transparent;color:#fff}
+
+    /* modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);z-index:60}
+    .modal .dialog{background:#fff;color:#111;padding:16px;border-radius:8px;min-width:320px}
+
+  /* Ensure modal inputs/buttons are readable on light background */
+  .modal .dialog input,
+  .modal .dialog select,
+  .modal .dialog textarea { color:#111 !important; }
+  .modal .dialog .btn-ghost { color:#111 !important; border-color:#ddd; background:transparent; }
+  .modal .dialog .btn-primary { color:#080707 !important; }
+
+  /* Keep ghost buttons white on dark cards */
+  .card .btn-ghost { color:#fff; }
+
+  /* Leaflet popups and controls can have light backgrounds — force readable color */
+  .leaflet-popup-content, .leaflet-popup-content-wrapper, .leaflet-control, .leaflet-control a { color:#111 !important; }
+
+    footer{margin-top:18px;text-align:center;opacity:.9;font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="floating-bubble"></div>
+  <div class="floating-bubble"></div>
+  <div class="floating-bubble"></div>
+  <div class="container">
+    <header>
+      <h1>LogiTrack ; Client Portal</h1>
+      <p class="lead">Request shipments, choose item categories, <br> pay on delivery (M-Pesa), and track requests <br> with ETA and map.</p>
+      <div id="clientBox" style="margin-top:8px;display:flex;gap:8px;align-items:center">
+        <input id="clientIdInput" placeholder="Enter your phone or client id (e.g. 2547...)" style="padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:transparent;color:#fff">
+        <button class="btn btn-primary" onclick="saveClientId()">Save ID</button>
+        <div id="clientLabel" style="display:none;color:#fff;font-weight:700"></div>
+        <button id="changeClientBtn" class="btn btn-ghost" style="display:none" onclick="clearClientId()">Change</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Card 1: Create Shipment -->
+      <div class="card">
+          <div class="card-header" onclick="toggleCard(this.parentElement)">
+            <h3>
+              <span class="section-icon">
+                <i class="fas fa-plus-circle"></i>
+              </span>
+              Create Shipment
+            </h3>
+            <i class="fas fa-chevron-down card-toggle"></i>
+          </div>
+          <div class="card-content">
+            <div style="margin-bottom:8px"><small class="small">Fields marked * are required</small></div>
+          <div class="form-row">
+            <div style="flex:1">
+              <label>Category *</label>
+              <select id="category">
+                <option value="Electronics">Electronics</option>
+                <option value="Vegetables">Vegetables</option>
+                <option value="Utensils">Utensils</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Documents">Documents</option>
+                <option value="Pharmaceuticals">Pharmaceuticals</option>
+                <option value="Furniture">Furniture</option>
+                <option value="Perishables">Perishables</option>
+                <option value="Fragile">Fragile</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div style="width:160px">
+              <label>Weight (kg)</label>
+              <input id="weight" type="number" min="0" step="0.1" placeholder="e.g. 2.5">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div style="flex:1">
+              <label>Pickup Location *</label>
+              <input id="pickup" type="text" placeholder="e.g. Eldoret CBD">
+            </div>
+            <div style="flex:1">
+              <label>Destination *</label>
+              <input id="destination" type="text" placeholder="e.g. Nairobi, Westlands">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div style="flex:1">
+              <label>Preferred Delivery Notes</label>
+              <input id="notes" type="text" placeholder="Leave at reception / Call on arrival">
+            </div>
+            <div style="width:180px">
+              <label>Pay on Delivery (M-Pesa)</label>
+              <select id="payOnDelivery">
+                <option value="yes">Yes (M-Pesa)</option>
+                <option value="no">Cash</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button class="btn btn-ghost" onclick="resetForm()">
+              <i class="fas fa-undo"></i>
+              Reset
+            </button>
+            <button class="btn btn-primary" onclick="createRequest()">
+              <i class="fas fa-paper-plane"></i>
+              Request Shipment
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Card 2: Track Shipment -->
+      <div class="card">
+          <div class="card-header" onclick="toggleCard(this.parentElement)">
+            <h3>
+              <span class="section-icon">
+                <i class="fas fa-search"></i>
+              </span>
+              Track Shipment
+            </h3>
+            <i class="fas fa-chevron-down card-toggle"></i>
+          </div>
+          <div class="card-content">
+            <div class="track-row">
+              <input id="quickTrackInput" placeholder="Enter tracking number (e.g. #SHP-2025-0004)">
+              <button class="btn btn-primary" onclick="quickTrack()">
+                <i class="fas fa-search"></i>
+                Track
+              </button>
+            </div>
+            <div id="trackResult" style="margin-top:8px"></div>
+          </div>
+      </div>
+
+      <!-- Card 3: Your Requests -->
+      <div class="card">
+          <div class="card-header" onclick="toggleCard(this.parentElement)">
+            <h3>
+              <span class="section-icon">
+                <i class="fas fa-list"></i>
+              </span>
+              Your Requests
+            </h3>
+            <i class="fas fa-chevron-down card-toggle"></i>
+          </div>
+          <div class="card-content">
+            <div id="requestsList" class="requests"></div>
+          </div>
+      </div>
+
+      <!-- Card 4: Map View -->
+      <div class="card">
+          <div class="card-header" onclick="toggleCard(this.parentElement)">
+            <h3>
+              <span class="section-icon">
+                <i class="fas fa-map-marker-alt"></i>
+              </span>
+              Live Map
+            </h3>
+            <i class="fas fa-chevron-down card-toggle"></i>
+          </div>
+          <div class="card-content">
+            <div id="map"></div>
+          <div style="display:flex;gap:8px;margin-top:16px;justify-content:space-between;align-items:center">
+            <div class="small">Map powered by OpenStreetMap & Leaflet</div>
+            <div>
+              <button class="btn btn-ghost" onclick="clearMap()">
+                <i class="fas fa-eraser"></i>
+                Clear Map
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- <footer>Tip: This demo uses Nominatim geocoding and simulates an M-Pesa STK push. For production, integrate Safaricom Daraja with proper server-side credentials.</footer> -->
+  </div>
+
+  <!-- M-Pesa modal (simulated) -->
+  <div id="mpesaModal" class="modal">
+    <div class="dialog">
+      <h4>Enter M-Pesa Phone Number</h4>
+      <input id="mpesaPhone" placeholder="2547XXXXXXXX" style="width:100%;padding:8px;margin:8px 0;border-radius:6px;border:1px solid #ddd">
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeMpesa()">Cancel</button>
+        <button class="btn btn-primary" onclick="simulateMpesa()">Send Payment Request</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  // shared storage key (shipments from clients and admin)
+  const STORAGE_KEY = 'logitrack_shipments_v1';
+
+  // client id key
+  const CLIENT_KEY = 'logitrack_client_id';
+
+  // load existing requests or seed with example
+  let requests = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+
+  // client identifier (phone or id) - used to show only the client's requests
+  function getClientId(){ return localStorage.getItem(CLIENT_KEY) || '' }
+  function saveClientId(){ const v = (document.getElementById('clientIdInput').value||'').trim(); if(!v) return alert('Enter an id or phone'); localStorage.setItem(CLIENT_KEY,v); renderClientBox(); renderRequests(); }
+  function clearClientId(){ localStorage.removeItem(CLIENT_KEY); renderClientBox(); renderRequests(); }
+  function renderClientBox(){ const id = getClientId(); const input = document.getElementById('clientIdInput'); const label = document.getElementById('clientLabel'); const changeBtn = document.getElementById('changeClientBtn'); if(id){ input.style.display='none'; document.querySelector('#clientBox .btn-primary').style.display='none'; label.style.display='block'; label.textContent = 'Logged in as: ' + id; changeBtn.style.display='inline-block'; } else { input.style.display='block'; document.querySelector('#clientBox .btn-primary').style.display='inline-block'; label.style.display='none'; changeBtn.style.display='none'; }}
+
+    // helper: generate sequential tracking number
+    function generateNextTrackingNumber() {
+      const prefix = '#SHP-2025-';
+      let max = 0;
+      requests.forEach(r => {
+        if (r.tracking && r.tracking.startsWith(prefix)) {
+          const num = parseInt(r.tracking.replace(prefix, ''));
+          if (!isNaN(num) && num > max) max = num;
+        }
+      });
+      const next = (max + 1).toString().padStart(4,'0');
+      return prefix + next;
+    }
+
+    // persist
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(requests)); renderRequests(); }
+
+    // render list (show only requests for this client)
+    function renderRequests(){
+      const el = document.getElementById('requestsList'); el.innerHTML='';
+      const clientId = getClientId();
+      if(!clientId){ el.innerHTML='<div class="small">Please enter your client id/phone above to see your requests.</div>'; return }
+      const filtered = requests.filter(r => r.clientId === clientId);
+      if(filtered.length===0){ el.innerHTML='<div class="small">No requests yet for this id.</div>'; return }
+      filtered.slice().reverse().forEach(r=>{
+        const div = document.createElement('div'); div.className='req';
+        div.innerHTML = `<div>
+            <div style="font-weight:700">${r.tracking}</div>
+            <div class="small">${r.category} · ${r.pickup} → ${r.destination}</div>
+            <div class="small">ETA: ${r.eta ? r.eta : 'calculating...'}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="margin-bottom:6px"><span class="badge ${r.payment==='Paid'?'paid':'pending'}">${r.payment}</span></div>
+            <div class="options-menu">
+              <button class="options-toggle" onclick="toggleOptions(this)">
+                <i class="fas fa-ellipsis-v"></i>
+              </button>
+              <div class="options-content">
+                <div class="option-item" onclick="viewOnMap('${r.id}')">
+                  <i class="fas fa-map-marker-alt"></i>
+                  View on Map
+                </div>
+                ${r.payment !== 'Paid' ? `
+                  <div class="option-item" onclick="requestPayment('${r.id}')">
+                    <i class="fas fa-credit-card"></i>
+                    Pay with M-Pesa
+                  </div>
+                ` : ''}
+                <div class="option-item" onclick="getDeliveryDetails('${r.id}')">
+                  <i class="fas fa-info-circle"></i>
+                  Delivery Details
+                </div>
+              </div>
+            </div>
+          </div>`;
+        el.appendChild(div);
+      });
+    }
+
+    // create request
+    async function createRequest(){
+      const category = document.getElementById('category').value;
+      const pickup = document.getElementById('pickup').value.trim();
+      const destination = document.getElementById('destination').value.trim();
+      const notes = document.getElementById('notes').value.trim();
+      const payOnDelivery = document.getElementById('payOnDelivery').value === 'yes';
+
+      if(!pickup || !destination) return alert('Please fill pickup and destination');
+
+  const tracking = generateNextTrackingNumber();
+      const id = 'REQ' + Date.now();
+
+  const clientId = getClientId();
+  if(!clientId) return alert('Please enter and save your client id/phone at the top before creating a request.');
+
+      // optimistic record
+  const req = { id, tracking, clientId, category, pickup, destination, notes, status: 'Pending', payment: payOnDelivery ? 'Pending' : 'Not Required', created: new Date().toISOString(), eta:null };
+      requests.push(req); save();
+
+      // geocode addresses and compute ETA (prefer OSRM driving route for road ETA)
+      try{
+        const originCoord = await geocode(pickup);
+        const destCoord = await geocode(destination);
+        if(originCoord && destCoord){
+          req.origin = originCoord; req.destinationCoord = destCoord;
+          try{
+            const route = await fetchRouteOSRM(originCoord, destCoord);
+            if(route){
+              // route.distance in meters, duration in seconds
+              req.distanceKm = (route.distance / 1000).toFixed(1);
+              req.eta = new Date(Date.now() + route.duration * 1000).toLocaleString();
+              req.route = route; req.status = 'Scheduled';
+              save();
+              showRouteOnMap(originCoord, destCoord, req.tracking, route);
+            } else {
+              // fallback to haversine heuristic
+              const km = distanceKm(originCoord.lat, destCoord.lat, originCoord.lon, destCoord.lon);
+              const etaDate = estimateETA(km);
+              req.eta = etaDate.toLocaleString();
+              req.distanceKm = km.toFixed(1);
+              req.status = 'Scheduled';
+              save();
+              showRouteOnMap(originCoord, destCoord, req.tracking);
+            }
+          }catch(err){
+            console.warn('Routing failed, falling back', err);
+            const km = distanceKm(originCoord.lat, destCoord.lat, originCoord.lon, destCoord.lon);
+            const etaDate = estimateETA(km);
+            req.eta = etaDate.toLocaleString();
+            req.distanceKm = km.toFixed(1);
+            req.status = 'Scheduled';
+            save();
+            showRouteOnMap(originCoord, destCoord, req.tracking);
+          }
+        } else {
+          req.eta = 'Unable to geocode'; save();
+        }
+      }catch(err){ console.error(err); req.eta='Error'; save(); }
+
+      resetForm();
+      alert('Request created: ' + tracking);
+    }
+
+    function resetForm(){ document.getElementById('pickup').value=''; document.getElementById('destination').value=''; document.getElementById('notes').value=''; document.getElementById('weight').value=''; }
+
+    // geocoding using Nominatim
+    async function geocode(q){
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q + ', Kenya');
+      const res = await fetch(url, {headers:{'Accept':'application/json'}});
+      const data = await res.json();
+      if(data && data.length) return {lat:parseFloat(data[0].lat), lon:parseFloat(data[0].lon), display_name:data[0].display_name};
+      return null;
+    }
+
+    // haversine distance
+    function distanceKm(lat1,lat2,lon1,lon2){
+      const R=6371; const dLat=(lat2-lat1)*Math.PI/180; const dLon=(lon2-lon1)*Math.PI/180;
+      const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+      const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)); return R*c;
+    }
+
+    // estimate ETA: assume avg speed 50km/h + 2 hours handling
+    function estimateETA(km){
+      const speed = 50; const hours = km / speed + 2; const ms = hours * 3600 * 1000; return new Date(Date.now() + ms);
+    }
+
+    // MAP (with OSRM routing + animated truck along the road)
+    let map, markersLayer, routeLayer, truckMarker, truckAnimTimer;
+    function initMap(){
+      map = L.map('map',{scrollWheelZoom:false}).setView([0.3476,32.5825],6);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+      markersLayer = L.layerGroup().addTo(map);
+    }
+
+    // Fetch driving route from OSRM public server. Returns {geometry, distance, duration} or null on failure.
+    async function fetchRouteOSRM(origin, dest){
+      try{
+        const aLon = origin.lon, aLat = origin.lat;
+        const bLon = dest.lon, bLat = dest.lat;
+        const url = `https://router.project-osrm.org/route/v1/driving/${aLon},${aLat};${bLon},${bLat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if(!res.ok) return null;
+        const data = await res.json();
+        if(data && data.routes && data.routes.length){
+          const r = data.routes[0];
+          return { geometry: r.geometry, distance: r.distance, duration: r.duration };
+        }
+      }catch(err){ console.warn('OSRM route error',err); }
+      return null;
+    }
+
+    // Draw route on map. If `route` is provided (OSRM), draw precise road geometry and animate a truck along it.
+    function showRouteOnMap(origin,dest,label, route){
+      if(!map) initMap();
+      // clear previous
+      if(markersLayer) markersLayer.clearLayers();
+      if(routeLayer){ map.removeLayer(routeLayer); routeLayer = null; }
+      if(truckAnimTimer){ clearInterval(truckAnimTimer); truckAnimTimer = null; }
+      if(truckMarker){ map.removeLayer(truckMarker); truckMarker = null; }
+
+      const o = L.marker([origin.lat, origin.lon]).bindPopup('Origin: '+origin.display_name);
+      const d = L.marker([dest.lat, dest.lon]).bindPopup('Destination: '+dest.display_name);
+      markersLayer.addLayer(o); markersLayer.addLayer(d);
+
+      if(route && route.geometry){
+        // Draw OSRM geometry (geojson geometry has coordinates as [lon,lat])
+        routeLayer = L.geoJSON(route.geometry, { style: { color:'#2a5298', weight:5, opacity:0.9 } }).addTo(map);
+        map.fitBounds(routeLayer.getBounds(),{padding:[40,40]});
+
+        // animate truck icon along coordinates
+        const coords = route.geometry.coordinates.map(c=>[c[1], c[0]]); // to [lat,lon]
+        animateTruckAlong(coords);
+        if(label) o.openPopup();
+      } else {
+        // fallback: straight line
+        const line = L.polyline([[origin.lat, origin.lon],[dest.lat,dest.lon]],{color:'#2a5298'}).addTo(markersLayer);
+        map.fitBounds(line.getBounds(),{padding:[40,40]});
+        if(label) o.openPopup();
+      }
+    }
+
+    // Animate a small truck marker along array of [lat,lng] coordinates.
+    function animateTruckAlong(latlngs){
+      if(!latlngs || latlngs.length===0) return;
+      // create a simple divIcon with truck emoji
+      const truckIcon = L.divIcon({ className: 'truck-icon', html: '🚚', iconSize: [30,30] });
+      truckMarker = L.marker(latlngs[0], {icon: truckIcon, interactive:false}).addTo(map);
+
+      let idx = 0;
+      const stepMs = 200; // update interval
+      truckAnimTimer = setInterval(()=>{
+        idx++;
+        if(idx >= latlngs.length){ clearInterval(truckAnimTimer); truckAnimTimer = null; return; }
+        truckMarker.setLatLng(latlngs[idx]);
+      }, stepMs);
+    }
+
+    function viewOnMap(id){
+      const req = requests.find(r=>r.id===id);
+      if(req && req.origin && req.destinationCoord){ showRouteOnMap(req.origin, req.destinationCoord, req.tracking, req.route); }
+      else alert('Coordinates not available for this request yet.');
+    }
+
+    function clearMap(){ if(markersLayer) markersLayer.clearLayers(); }
+
+    // quick track by tracking number
+    function quickTrack(){
+      const q = (document.getElementById('quickTrackInput').value || '').trim().toUpperCase();
+      if(!q) return alert('Enter tracking');
+      const clientId = getClientId();
+      const r = requests.find(x=>x.tracking===q && x.clientId===clientId);
+      const out = document.getElementById('trackResult');
+      if(!r){ out.innerHTML = '<div class="small">Not found or does not belong to your id.</div>'; return }
+      out.innerHTML = `<div><strong>${r.tracking}</strong> · ${r.status} · ETA: ${r.eta || 'calculating...'}</div>`;
+      if(r.origin && r.destinationCoord) showRouteOnMap(r.origin, r.destinationCoord, r.tracking, r.route);
+    }
+
+    // payment simulation
+    let pendingPaymentId = null;
+    function requestPayment(id){
+      const req = requests.find(r=>r.id===id);
+      if(!req) return; if(req.payment==='Paid') return alert('Already paid');
+      pendingPaymentId = id; document.getElementById('mpesaPhone').value='2547'; document.getElementById('mpesaModal').style.display='flex';
+    }
+    function closeMpesa(){ document.getElementById('mpesaModal').style.display='none'; pendingPaymentId=null; }
+    function simulateMpesa(){ const phone = document.getElementById('mpesaPhone').value.trim(); if(!phone) return alert('Enter phone');
+      document.getElementById('mpesaModal').style.display='none';
+      const req = requests.find(r=>r.id===pendingPaymentId); if(!req) return;
+      req.payment = 'Pending (STK)'; save();
+      // simulate network/payment delay
+      setTimeout(()=>{ req.payment = 'Paid'; req.status = 'In Transit'; save(); alert('Payment successful via M-Pesa'); }, 3500);
+    }
+
+  // load and render
+  function bootstrap(){ renderClientBox(); renderRequests(); initMap(); }
+
+    // listen for storage changes (e.g., admin added shipment) and update list
+    window.addEventListener('storage', (e) => {
+      if (e.key === STORAGE_KEY) {
+        try {
+          requests = JSON.parse(e.newValue || '[]');
+        } catch (err) { requests = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+        renderRequests();
+      }
+    });
+
+    // expose for html onclicks
+    window.createRequest = createRequest; window.renderRequests = renderRequests; window.viewOnMap = viewOnMap;
+    window.requestPayment = requestPayment; window.quickTrack = quickTrack; window.clearMap = clearMap; window.resetForm = resetForm;
+
+    // Options menu functionality
+    function toggleOptions(button) {
+      // Close any other open menus first
+      document.querySelectorAll('.options-content.show').forEach(menu => {
+        if (menu !== button.nextElementSibling) {
+          menu.classList.remove('show');
+        }
+      });
+      
+      const content = button.nextElementSibling;
+      content.classList.toggle('show');
+      
+      // Close menu when clicking outside
+      const closeMenu = (e) => {
+        if (!button.contains(e.target) && !content.contains(e.target)) {
+          content.classList.remove('show');
+          document.removeEventListener('click', closeMenu);
+        }
+      };
+      
+      if (content.classList.contains('show')) {
+        setTimeout(() => {
+          document.addEventListener('click', closeMenu);
+        }, 0);
+      }
+    }
+
+    function getDeliveryDetails(id) {
+      const request = requests.find(r => r.id === id);
+      if (!request) return;
+      
+      alert(`
+Tracking: ${request.tracking}
+Category: ${request.category}
+From: ${request.pickup}
+To: ${request.destination}
+Status: ${request.status}
+ETA: ${request.eta || 'Calculating...'}
+Payment: ${request.payment}
+${request.notes ? '\nNotes: ' + request.notes : ''}
+      `);
+    }
+
+    // Close all option menus when clicking the body
+    document.body.addEventListener('click', (e) => {
+      if (!e.target.closest('.options-menu')) {
+        document.querySelectorAll('.options-content.show').forEach(menu => {
+          menu.classList.remove('show');
+        });
+      }
+    });
+
+    // initial bootstrap
+    bootstrap();
+
+    // Card toggling functionality
+    function toggleCard(card) {
+      const wasExpanded = card.classList.contains('expanded');
+      
+      // Close all other cards
+      document.querySelectorAll('.card.expanded').forEach(openCard => {
+        if (openCard !== card) {
+          openCard.classList.remove('expanded');
+        }
+      });
+      
+      // Toggle this card
+      card.classList.toggle('expanded');
+      
+      // If this is the map card and it's being expanded, update the map
+      if (card.querySelector('h3').textContent.includes('Map') && !wasExpanded) {
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 500);
+      }
+      
+      // Scroll card into view if it's expanded
+      if (card.classList.contains('expanded')) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  </script>
+</body>
+</html>

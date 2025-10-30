@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LogiTrack Admin Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #638cd7 100%);
+      color: #fff;
+      overflow-y: auto;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    .background-pattern {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      opacity: 0.05;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 50px, #fff 50px, #fff 51px),
+        repeating-linear-gradient(90deg, transparent, transparent 50px, #fff 50px, #fff 51px);
+      z-index: 0;
+    }
+
+    .main-content {
+      position: relative;
+      z-index: 1;
+      padding: 30px;
+      max-width: 1400px;
+      margin: auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .admin-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.15);
+      padding: 10px 15px;
+      border-radius: 12px;
+    }
+
+    .admin-info i {
+      font-size: 18px;
+      color: #e0e6f0;
+    }
+
+    /* Quick links row */
+    .quick-links {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .link-card {
+      flex: 1;
+      min-width: 220px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 25px;
+      text-align: center;
+      color: #fff;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .link-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .link-card i {
+      font-size: 28px;
+      margin-bottom: 12px;
+      color: #ffd369;
+    }
+
+    .link-card h3 {
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    /* Map and alerts */
+    .map-section {
+      display: flex;
+      gap: 25px;
+      align-items: flex-start;
+    }
+
+    #map {
+      flex: 3;
+      height: 450px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.25);
+    }
+
+    .alerts {
+      flex: 1;
+      background: rgba(4, 11, 111, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 6px 25px rgba(0,0,0,0.25);
+      height: 450px;
+      overflow-y: auto;
+    }
+
+    .alerts h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    .alert {
+      background: rgba(28, 2, 93, 0.1);
+      padding: 12px 15px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+
+    }
+
+    .alert i {
+      color: #a51109;
+      font-size: 17px;
+    }
+
+    @media (max-width: 900px) {
+      .map-section {
+        flex-direction: column;
+      }
+      .alerts {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background-pattern"></div>
+
+  <main class="main-content">
+    <header>
+      <h1>Welcome, Admin</h1>
+      <div class="admin-info">
+        <i class="fa-solid fa-user-shield"></i>
+        <span>Admin Panel</span>
+      </div>
+    </header>
+
+    <!-- Quick Links -->
+   <div class="card-body" style="padding: 1.5rem;">
+                <h2 style="color: white; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">🚀 Quick Links</h2>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <a href="/PAGES/shipment.html" onclick="scrollShipmentsPage()" style="background: rgba(255,255,255,0.95); padding: 1.25rem; border-radius: 0.5rem; text-decoration: none; color: #1f2937; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'">
+                        <div style="background: #dbeafe; width: 48px; height: 48px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">📦</div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 1rem;">Shipments</div>
+                            <div style="font-size: 0.875rem; color: #6b7280;">Manage deliveries</div>
+                        </div>
+                    </a>
+                    <a href="/PAGES/personnel.html" onclick="showPersonnelPage()" style="background: rgba(255,255,255,0.95); padding: 1.25rem; border-radius: 0.5rem; text-decoration: none; color: #1f2937; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'">
+                        <div style="background: #fce7f3; width: 48px; height: 48px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">👥</div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 1rem;">Personnel</div>
+                            <div style="font-size: 0.875rem; color: #6b7280;">Staff management</div>
+                        </div>
+                    </a>
+                    <a href="/PAGES/parcels.html" onclick="showParcelsPage()" style="background: rgba(255,255,255,0.95); padding: 1.25rem; border-radius: 0.5rem; text-decoration: none; color: #1f2937; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'">
+                        <div style="background: #d1fae5; width: 48px; height: 48px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">📮</div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 1rem;">Parcels</div>
+                            <div style="font-size: 0.875rem; color: #6b7280;">Parcel tracking</div>
+                        </div>
+                    </a>
+                    <a href="/PAGES/settings.html" onclick="showSettingsPage()" style="background: rgba(255,255,255,0.95); padding: 1.25rem; border-radius: 0.5rem; text-decoration: none; color: #1f2937; transition: transform 0.2s, box-shadow 0.2s; display: flex; align-items: center; gap: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'">
+                        <div style="background: #fef3c7; width: 48px; height: 48px; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">📊</div>
+                        <div>
+                            <div style="font-weight: 600; font-size: 1rem;">Settings</div>
+                            <div style="font-size: 0.875rem; color: #6b7280;">System configuration </div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+    <!-- Map + Alerts -->
+    <section class="map-section">
+      <div id="map"></div>
+
+      <div class="alerts">
+        <h2>⚠️ Alerts</h2>
+        <div class="alert"><i class="fa-solid fa-triangle-exclamation"></i>Shipment delayed: Parcel #1023</div>
+        <div class="alert"><i class="fa-solid fa-truck-ramp-box"></i>Driver #D07 not responding</div>
+        <div class="alert"><i class="fa-solid fa-wifi"></i>Tracking signal lost (Zone C)</div>
+        <div class="alert"><i class="fa-solid fa-clock"></i>Pending delivery deadline in 2 hrs</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let map;
+    let deliveryMarkers = [];
+    let deliveryPaths = [];
+    let showingPaths = true;
+
+    // Sample delivery vehicles with their routes
+    const deliveryVehicles = [
+      {
+        id: 'V001',
+        position: [0.52036, 35.26978],
+        destination: [0.53036, 35.28978],
+        status: 'On Route',
+        driver: 'John Doe',
+        eta: '15 mins'
+      },
+      {
+        id: 'V002',
+        position: [0.51036, 35.27978],
+        destination: [0.50036, 35.29978],
+        status: 'Delivering',
+        driver: 'Jane Smith',
+        eta: '25 mins'
+      }
+    ];
+
+    // Initialize the map once the DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      initMap();
+    });
+
+    function initMap() {
+      const eldoret = [0.52036, 35.26978];
+      
+      // Create map with OpenStreetMap
+      map = L.map('map').setView(eldoret, 13);
+      
+      // Add OpenStreetMap tiles
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(map);
+
+      // Initialize delivery vehicles
+      deliveryVehicles.forEach(vehicle => {
+        addVehicleToMap(vehicle);
+      });
+
+      // Start vehicle movement simulation
+      setInterval(updateVehiclePositions, 3000);
+    }
+
+    function addVehicleToMap(vehicle) {
+      // Create custom marker icon
+      const truckIcon = L.divIcon({
+        html: '<i class="fa-solid fa-truck" style="color: #FFD369; font-size: 24px;"></i>',
+        className: 'vehicle-marker',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      // Create marker
+      const marker = L.marker(vehicle.position, {
+        icon: truckIcon,
+        title: `Vehicle ${vehicle.id}`
+      }).addTo(map);
+
+      // Add popup
+      marker.bindPopup(`
+        <div style="padding:5px">
+          <strong>Vehicle ${vehicle.id}</strong><br>
+          Driver: ${vehicle.driver}<br>
+          Status: ${vehicle.status}<br>
+          ETA: ${vehicle.eta}
+        </div>
+      `);
+
+      // Draw route path
+      const path = L.polyline([vehicle.position, vehicle.destination], {
+        color: '#FFD369',
+        opacity: 0.8,
+        weight: 2
+      }).addTo(map);
+
+      deliveryMarkers.push(marker);
+      deliveryPaths.push(path);
+    }
+
+    function updateVehiclePositions() {
+      deliveryMarkers.forEach((marker, i) => {
+        const vehicle = deliveryVehicles[i];
+        const newPos = simulateMovement(vehicle.position);
+        marker.setLatLng(newPos);
+        vehicle.position = newPos;
+        
+        // Update polyline
+        const path = deliveryPaths[i];
+        path.setLatLngs([newPos, vehicle.destination]);
+      });
+    }
+
+    function simulateMovement(current) {
+      // Simple random movement for demo
+      const step = 0.00005;
+      return [
+        current[0] + (Math.random() > 0.5 ? step : -step),
+        current[1] + (Math.random() > 0.5 ? step : -step)
+      ];
+    }
+
+    function toggleDeliveryPaths() {
+      showingPaths = !showingPaths;
+      deliveryPaths.forEach(path => {
+        if (showingPaths) {
+          path.addTo(map);
+        } else {
+          path.remove();
+        }
+      });
+    }
+
+    function centerOnVehicles() {
+      const group = new L.featureGroup(deliveryMarkers);
+      map.fitBounds(group.getBounds());
+    }
+
+    function simulateNewDelivery() {
+      const newVehicle = {
+        id: 'V00' + (deliveryVehicles.length + 1),
+        position: [
+          0.52036 + (Math.random() * 0.02 - 0.01),
+          35.26978 + (Math.random() * 0.02 - 0.01)
+        ],
+        destination: [
+          0.52036 + (Math.random() * 0.02 - 0.01),
+          35.26978 + (Math.random() * 0.02 - 0.01)
+        ],
+        status: 'Starting Delivery',
+        driver: 'New Driver ' + (deliveryVehicles.length + 1),
+        eta: Math.floor(Math.random() * 30 + 10) + ' mins'
+      };
+      
+      deliveryVehicles.push(newVehicle);
+      addVehicleToMap(newVehicle);
+
+      // Add alert
+      const alertsContainer = document.querySelector('.alerts');
+      const newAlert = document.createElement('div');
+      newAlert.className = 'alert';
+      newAlert.innerHTML = `<i class="fa-solid fa-truck"></i>New delivery started: Vehicle ${newVehicle.id}`;
+      alertsContainer.insertBefore(newAlert, alertsContainer.firstChild);
+    }
+  </script>
+</body>
+</html>
+
+
+
