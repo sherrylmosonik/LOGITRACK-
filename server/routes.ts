@@ -11,6 +11,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedUser = insertUserSchema.parse(req.body);
       
+      if (validatedUser.role === 'admin') {
+        return res.status(403).json({ message: "Cannot create admin users through signup" });
+      }
+      
       const existingUser = await storage.getUserByUsername(validatedUser.username);
       if (existingUser) {
         return res.status(400).json({ message: "Username already exists" });
@@ -21,7 +25,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Email already exists" });
       }
 
-      const user = await storage.createUser(validatedUser);
+      const user = await storage.createUser({
+        ...validatedUser,
+        role: 'client',
+      });
       
       if (req.session) {
         req.session.userId = user.id;
@@ -86,23 +93,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(userWithoutPassword);
   });
 
+  // Middleware for authentication
+  const requireAuth = (req: Request, res: Response, next: any) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    next();
+  };
+
   // Shipment routes
-  app.get("/api/shipments", async (req: Request, res: Response) => {
+  app.get("/api/shipments", requireAuth, async (req: Request, res: Response) => {
     try {
+      const currentUser = await storage.getUserById(req.session!.userId!);
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
       const shipments = await storage.getAllShipments();
-      res.json(shipments);
+      
+      if (currentUser.role === 'admin') {
+        res.json(shipments);
+      } else if (currentUser.role === 'client') {
+        const filteredShipments = shipments.filter(s => s.clientId === currentUser.id);
+        res.json(filteredShipments);
+      } else if (currentUser.role === 'personnel') {
+        const filteredShipments = shipments.filter(s => s.assignedDriverId === currentUser.id);
+        res.json(filteredShipments);
+      } else {
+        res.json([]);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch shipments" });
     }
   });
 
-  app.get("/api/shipments/:id", async (req: Request, res: Response) => {
+  app.get("/api/shipments/:id", requireAuth, async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const shipment = await storage.getShipmentById(id);
       
       if (!shipment) {
         return res.status(404).json({ message: "Shipment not found" });
+      }
+
+      const currentUser = await storage.getUserById(req.session!.userId!);
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      if (currentUser.role === 'client' && shipment.clientId !== currentUser.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      if (currentUser.role === 'personnel' && shipment.assignedDriverId !== currentUser.id) {
+        return res.status(403).json({ message: "Access denied" });
       }
       
       res.json(shipment);
@@ -126,9 +170,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/shipments", async (req: Request, res: Response) => {
+  app.post("/api/shipments", requireAuth, async (req: Request, res: Response) => {
     try {
+      const currentUser = await storage.getUserById(req.session!.userId!);
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
       const validatedShipment = insertShipmentSchema.parse(req.body);
+      
+      if (currentUser.role === 'client') {
+        validatedShipment.clientId = currentUser.id;
+      }
+      
       const shipment = await storage.createShipment(validatedShipment);
       
       await storage.createShipmentEvent({
@@ -136,7 +190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         eventType: 'created',
         description: 'Shipment created',
         location: shipment.pickupAddress,
-        createdBy: req.session?.userId,
+        createdBy: currentUser.id,
       });
       
       res.status(201).json(shipment);
@@ -148,9 +202,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch("/api/shipments/:id", async (req: Request, res: Response) => {
+  app.patch("/api/shipments/:id", requireAuth, async (req: Request, res: Response) => {
     try {
+      const currentUser = await storage.getUserById(req.session!.userId!);
+      if (!currentUser) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
       const id = parseInt(req.params.id);
+      const existingShipment = await storage.getShipmentById(id);
+      
+      if (!existingShipment) {
+        return res.status(404).json({ message: "Shipment not found" });
+      }
+
+      if (currentUser.role === 'client' && existingShipment.clientId !== currentUser.id) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      if (currentUser.role === 'personnel' && existingShipment.assignedDriverId !== currentUser.id) {
+        return res.status(403).json({ message: "Access denied - shipment not assigned to you" });
+      }
+
+      if (currentUser.role === 'personnel') {
+        const allowedFields = ['status'];
+        const requestedFields = Object.keys(req.body);
+        const unauthorizedFields = requestedFields.filter(f => !allowedFields.includes(f));
+        
+        if (unauthorizedFields.length > 0) {
+          return res.status(403).json({ message: "Personnel can only update shipment status" });
+        }
+      }
+
       const shipment = await storage.updateShipment(id, req.body);
       
       if (!shipment) {
@@ -162,7 +245,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           shipmentId: id,
           eventType: req.body.status,
           description: `Status updated to ${req.body.status}`,
-          createdBy: req.session?.userId,
+          createdBy: currentUser.id,
         });
       }
       
@@ -172,8 +255,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/shipments/:id", async (req: Request, res: Response) => {
+  app.delete("/api/shipments/:id", requireAuth, async (req: Request, res: Response) => {
     try {
+      const currentUser = await storage.getUserById(req.session!.userId!);
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       const id = parseInt(req.params.id);
       const success = await storage.deleteShipment(id);
       
@@ -188,8 +276,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Personnel routes
-  app.get("/api/personnel", async (req: Request, res: Response) => {
+  app.get("/api/personnel", requireAuth, async (req: Request, res: Response) => {
     try {
+      const currentUser = await storage.getUserById(req.session!.userId!);
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       const personnel = await storage.getAllPersonnel();
       res.json(personnel);
     } catch (error) {
@@ -197,8 +290,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/personnel", async (req: Request, res: Response) => {
+  app.post("/api/personnel", requireAuth, async (req: Request, res: Response) => {
     try {
+      const currentUser = await storage.getUserById(req.session!.userId!);
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       const validatedPersonnel = insertPersonnelSchema.parse(req.body);
       const personnel = await storage.createPersonnel(validatedPersonnel);
       res.status(201).json(personnel);
@@ -226,8 +324,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Vehicle routes
-  app.get("/api/vehicles", async (req: Request, res: Response) => {
+  app.get("/api/vehicles", requireAuth, async (req: Request, res: Response) => {
     try {
+      const currentUser = await storage.getUserById(req.session!.userId!);
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       const vehicles = await storage.getAllVehicles();
       res.json(vehicles);
     } catch (error) {
@@ -235,8 +338,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/vehicles", async (req: Request, res: Response) => {
+  app.post("/api/vehicles", requireAuth, async (req: Request, res: Response) => {
     try {
+      const currentUser = await storage.getUserById(req.session!.userId!);
+      if (!currentUser || currentUser.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
       const validatedVehicle = insertVehicleSchema.parse(req.body);
       const vehicle = await storage.createVehicle(validatedVehicle);
       res.status(201).json(vehicle);

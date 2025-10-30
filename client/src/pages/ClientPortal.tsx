@@ -26,7 +26,6 @@ export default function ClientPortal() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newShipment, setNewShipment] = useState({
     trackingNumber: `TN${Date.now()}`,
-    clientId: 1,
     pickupAddress: "",
     deliveryAddress: "",
     recipientName: "",
@@ -47,11 +46,15 @@ export default function ClientPortal() {
 
   const createShipmentMutation = useMutation({
     mutationFn: async (shipment: any) => {
+      if (!currentUser) {
+        throw new Error('User not authenticated');
+      }
+      
       const res = await fetch('/api/shipments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ ...shipment, clientId: currentUser?.id || 1 }),
+        body: JSON.stringify(shipment),
       });
       if (!res.ok) throw new Error('Failed to create shipment');
       return res.json();
@@ -62,7 +65,6 @@ export default function ClientPortal() {
       setIsCreateDialogOpen(false);
       setNewShipment({
         trackingNumber: `TN${Date.now()}`,
-        clientId: 1,
         pickupAddress: "",
         deliveryAddress: "",
         recipientName: "",

@@ -134,19 +134,6 @@ export default function Signup() {
                 data-testid="input-password"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="role">Account Type</Label>
-              <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-                <SelectTrigger id="role" data-testid="select-role">
-                  <SelectValue placeholder="Select account type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="client">Client</SelectItem>
-                  <SelectItem value="personnel">Personnel (Driver/Dispatcher)</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
             <Button
               type="submit"
               className="w-full gap-2"
