@@ -381,7 +381,7 @@
     
     <div class="login-wrapper">
         <div class="branding-section">
-            <a class="logo-container logo-link" href="landing.html">
+            <a class="logo-container logo-link" href="/attached_assets/landing_1761824155689.html">
                 <div class="logo-icon">🚛</div>
                 <div class="logo-text">
                     <h1>LogiTrack</h1>
@@ -471,7 +471,7 @@
                     <button type="submit">Sign In</button>
 
                         <div style="margin-top:16px;text-align:center;color:#475569">
-                            Don't have an account? <a href="signup.html" style="color:#2a5298;font-weight:600">Sign up</a>
+                            Don't have an account? <a href="/attached_assets/signup_1761824155692.html" style="color:#2a5298;font-weight:600">Sign up</a>
                         </div>
 
                     <div class="security-badge">
@@ -514,7 +514,7 @@
         const existsEmail = users.some(u => u.email && u.email.toLowerCase() === email);
         if (!existsEmail) {
             if (confirm('No account found for this email. Would you like to sign up?')) {
-                window.location.href = 'signup.html';
+                window.location.href = 'signup_1761824155692.html';
             }
             return;
         }
@@ -524,11 +524,11 @@
 
     // successful login — redirect based on selected user type
     if (selectedUserType === 'admin') {
-        window.location.href = 'admindash.html';
+        window.location.href = 'admindash_1761824155683.html';
     } else if (selectedUserType === 'personnel') {
-        window.location.href = 'personnel.html';
+        window.location.href = 'personnel_1761824155691.html';
     } else {
-        window.location.href = 'client.html';
+        window.location.href = 'client_1761824155692.html';
     }
 });
 
