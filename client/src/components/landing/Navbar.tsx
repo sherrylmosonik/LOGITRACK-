@@ -47,8 +47,8 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm">Sign in</Button>
-            <Button size="sm">Get Started</Button>
+            <Button variant="ghost" size="sm" onClick={() => window.location.href = '/login'}>Sign in</Button>
+            <Button size="sm" onClick={() => window.location.href = '/signup'}>Get Started</Button>
           </div>
 
           <button
@@ -75,8 +75,8 @@ export default function Navbar() {
               </a>
             ))}
             <div className="pt-4 space-y-2">
-              <Button variant="ghost" className="w-full">Sign in</Button>
-              <Button className="w-full">Get Started</Button>
+              <Button variant="ghost" className="w-full" onClick={() => window.location.href = '/login'}>Sign in</Button>
+              <Button className="w-full" onClick={() => window.location.href = '/signup'}>Get Started</Button>
             </div>
           </div>
         </div>

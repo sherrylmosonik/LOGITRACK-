@@ -23,13 +23,13 @@ export default function Hero() {
           </p>
 
           <div className="flex flex-wrap gap-4 pt-4">
-            <Button size="lg" className="text-base gap-2">
+            <Button size="lg" className="text-base gap-2" onClick={() => window.location.href = '/signup'}>
               <Package className="w-5 h-5" />
               Get Started
             </Button>
-            <Button size="lg" variant="outline" className="text-base gap-2">
+            <Button size="lg" variant="outline" className="text-base gap-2" onClick={() => window.location.href = '#how-it-works'}>
               <TrendingUp className="w-5 h-5" />
-              Watch Demo
+              Learn More
             </Button>
           </div>
 

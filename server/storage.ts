@@ -68,6 +68,7 @@ export class MemStorage implements IStorage {
     const newUser: User = {
       ...user,
       id: this.userIdCounter++,
+      phone: user.phone ?? null,
     };
     this.users.push(newUser);
     return newUser;
@@ -104,6 +105,10 @@ export class MemStorage implements IStorage {
       id: this.shipmentIdCounter++,
       createdAt: new Date(),
       deliveredAt: null,
+      assignedDriverId: shipment.assignedDriverId ?? null,
+      weight: shipment.weight ?? null,
+      dimensions: shipment.dimensions ?? null,
+      notes: shipment.notes ?? null,
     };
     this.shipments.push(newShipment);
     return newShipment;
@@ -143,6 +148,9 @@ export class MemStorage implements IStorage {
       ...personnel,
       id: this.personnelIdCounter++,
       hireDate: new Date(),
+      licenseNumber: personnel.licenseNumber ?? null,
+      vehicleAssigned: personnel.vehicleAssigned ?? null,
+      isActive: personnel.isActive ?? true,
     };
     this.personnel.push(newPersonnel);
     return newPersonnel;
@@ -170,6 +178,10 @@ export class MemStorage implements IStorage {
       ...vehicle,
       id: this.vehicleIdCounter++,
       lastUpdated: null,
+      capacity: vehicle.capacity ?? null,
+      currentDriverId: vehicle.currentDriverId ?? null,
+      lastLat: vehicle.lastLat ?? null,
+      lastLng: vehicle.lastLng ?? null,
     };
     this.vehicles.push(newVehicle);
     return newVehicle;
@@ -201,6 +213,8 @@ export class MemStorage implements IStorage {
       ...event,
       id: this.eventIdCounter++,
       createdAt: new Date(),
+      location: event.location ?? null,
+      createdBy: event.createdBy ?? null,
     };
     this.shipmentEvents.push(newEvent);
     return newEvent;
