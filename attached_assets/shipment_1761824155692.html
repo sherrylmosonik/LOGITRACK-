@@ -490,6 +490,7 @@
           <td>${s.personnel ? s.personnel : ''}</td>
           <td>
             <button class="btn-secondary" onclick="editShipment('${s.tracking}')">✏️ Edit</button>
+            <button class="btn-secondary" style="margin-left:8px;background:#fee2e2;color:#b91c1c;" onclick="deleteShipment('${s.tracking}')">🗑️ Delete</button>
           </td>
         </tr>
       `).join('');
@@ -558,6 +559,13 @@
       }
       saveShipments();
       closeEditModal();
+      renderShipments();
+    }
+
+    function deleteShipment(id) {
+      if (!confirm(`Remove shipment ${id} from the system?`)) return;
+      shipments = shipments.filter(s => s.tracking !== id);
+      saveShipments();
       renderShipments();
     }
 

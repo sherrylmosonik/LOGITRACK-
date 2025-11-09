@@ -99,6 +99,10 @@
       text-align: left;
     }
 
+    /* Keep the actions column a fixed width so buttons don't shift table layout when rows are added */
+    table { table-layout: auto; }
+    .actions { width: 140px; text-align: right; white-space: nowrap; }
+
     th {
       background: rgba(0, 0, 0, 0.3);
       text-transform: uppercase;
@@ -126,7 +130,7 @@
     }
 
     .actions button {
-      margin-right: 0.4rem;
+      margin-left: 0.4rem;
       background: #232991;
       border: none;
       border-radius: 6px;
@@ -341,6 +345,9 @@
       { name: "Moses Kip", role: "Supervisor", phone: "0734567890", email: "moses@logitrack.com", status: "Active", shipments: 7 },
     ];
 
+    // index currently being edited; null when adding a new personnel
+    let editingIndex = null;
+
     function renderPersonnel() {
       const tbody = document.getElementById("personnelBody");
       tbody.innerHTML = "";
@@ -365,49 +372,89 @@
     function filterTable() {
       const search = document.getElementById("searchInput").value.toLowerCase();
       const roleFilter = document.getElementById("roleFilter").value;
-      const filtered = personnel.filter(p =>
-        p.name.toLowerCase().includes(search) &&
-        (roleFilter === "" || p.role === roleFilter)
-      );
       const tbody = document.getElementById("personnelBody");
       tbody.innerHTML = "";
-      filtered.forEach((p, index) => {
-        tbody.innerHTML += `
-          <tr>
-            <td>${p.name}</td>
-            <td>${p.role}</td>
-            <td>${p.phone}</td>
-            <td>${p.email}</td>
-            <td class="${p.status === 'Active' ? 'status-active' : 'status-off'}">${p.status}</td>
-            <td>${p.shipments}</td>
-            <td class="actions">
-              <button onclick="editPersonnel(${index})">✏️</button>
-              <button onclick="deletePersonnel(${index})">🗑️</button>
-            </td>
-          </tr>
-        `;
+
+      // iterate original array so indices remain correct for actions
+      personnel.forEach((p, idx) => {
+        if (
+          p.name.toLowerCase().includes(search) &&
+          (roleFilter === "" || p.role === roleFilter)
+        ) {
+          tbody.innerHTML += `
+            <tr>
+              <td>${p.name}</td>
+              <td>${p.role}</td>
+              <td>${p.phone}</td>
+              <td>${p.email}</td>
+              <td class="${p.status === 'Active' ? 'status-active' : 'status-off'}">${p.status}</td>
+              <td>${p.shipments}</td>
+              <td class="actions">
+                <button onclick="editPersonnel(${idx})">✏️</button>
+                <button onclick="deletePersonnel(${idx})">🗑️</button>
+              </td>
+            </tr>
+          `;
+        }
       });
     }
 
-    function openModal() { document.getElementById("personnelModal").style.display = "flex"; }
-    function closeModal() { document.getElementById("personnelModal").style.display = "none"; }
+    function openModal(index = null) {
+      // index === null => adding new personnel; otherwise editing existing
+      editingIndex = index;
+      const modal = document.getElementById("personnelModal");
+      const title = document.getElementById("modalTitle");
+      if (index === null) {
+        title.textContent = 'Add Personnel';
+        // clear fields
+        document.getElementById('name').value = '';
+        document.getElementById('role').value = 'Driver';
+        document.getElementById('phone').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('status').value = 'Active';
+      } else {
+        title.textContent = 'Edit Personnel';
+        const p = personnel[index];
+        document.getElementById('name').value = p.name;
+        document.getElementById('role').value = p.role;
+        document.getElementById('phone').value = p.phone;
+        document.getElementById('email').value = p.email;
+        document.getElementById('status').value = p.status;
+      }
+      modal.style.display = "flex";
+    }
+    function closeModal() { document.getElementById("personnelModal").style.display = "none"; editingIndex = null; }
 
     function savePersonnel() {
       const newPersonnel = {
-        name: document.getElementById("name").value,
+        name: document.getElementById("name").value.trim(),
         role: document.getElementById("role").value,
-        phone: document.getElementById("phone").value,
-        email: document.getElementById("email").value,
+        phone: document.getElementById("phone").value.trim(),
+        email: document.getElementById("email").value.trim(),
         status: document.getElementById("status").value,
         shipments: 0,
       };
-      personnel.push(newPersonnel);
+
+      if (!newPersonnel.name) { alert('Please enter a name'); return; }
+
+      if (editingIndex === null) {
+        // add new
+        personnel.push(newPersonnel);
+      } else {
+        // update existing (preserve shipments if any)
+        newPersonnel.shipments = personnel[editingIndex].shipments || 0;
+        personnel[editingIndex] = newPersonnel;
+      }
+
       closeModal();
-      renderPersonnel();
+
+      // refresh view depending on active filters
+      const hasFilter = document.getElementById('searchInput').value.trim() !== '' || document.getElementById('roleFilter').value !== '';
+      if (hasFilter) filterTable(); else renderPersonnel();
     }
 
     function editPersonnel(index) {
-      alert("Edit feature coming soon for " + personnel[index].name);
+      openModal(index);
     }
 
     function deletePersonnel(index) {
@@ -425,6 +472,16 @@
     const now = new Date();
     let currentMonth = now.getMonth();
     let currentYear = now.getFullYear();
+
+    // persist shifts so assignments remain for future reference
+    const SHIFTS_KEY = 'logitrack_personnel_shifts_v1';
+    let shifts = {};
+    function loadShifts(){
+      try{ shifts = JSON.parse(localStorage.getItem(SHIFTS_KEY) || '{}') }catch(e){ shifts = {} }
+    }
+    function saveShifts(){ try{ localStorage.setItem(SHIFTS_KEY, JSON.stringify(shifts)) }catch(e){ console.error('saveShifts failed', e) } }
+    function dateKey(y,m,d){ return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}` }
+    loadShifts();
 
     function renderCalendar(month, year) {
       calendarGrid.innerHTML = '';
@@ -446,22 +503,69 @@
         day.classList.add('calendar-day');
         day.innerHTML = `<strong>${d}</strong>`;
 
+        const key = dateKey(year, month, d);
+
+        // mark today
         if (d === now.getDate() && month === now.getMonth() && year === now.getFullYear()) {
           day.classList.add('today');
         }
 
-        day.addEventListener('click', () => {
-          const staff = prompt(`Assign shift for ${monthName} ${d}, ${year}:`);
-          if (staff) {
+        // render existing shifts for this date (if any)
+        if (shifts[key] && Array.isArray(shifts[key])){
+          shifts[key].forEach((name, idx)=>{
             const shift = document.createElement('div');
             shift.classList.add('shift');
-            shift.textContent = staff;
+            shift.textContent = name;
+            shift.dataset.index = idx;
+            // allow editing/deleting existing shifts by clicking the shift itself
+            shift.addEventListener('click', (e)=>{
+              e.stopPropagation();
+              editShift(key, idx);
+            });
             day.appendChild(shift);
-          }
-        });
+          });
+        }
+
+        // only allow adding new assignments to present or future dates
+        const dayDate = new Date(year, month, d);
+        const today = new Date(); today.setHours(0,0,0,0);
+        if (dayDate >= today) {
+          day.addEventListener('click', () => {
+            const staff = prompt(`Assign shift for ${monthName} ${d}, ${year}:`);
+            if (staff && staff.trim()){
+              shifts[key] = shifts[key] || [];
+              shifts[key].push(staff.trim());
+              saveShifts();
+              renderCalendar(month, year);
+            }
+          });
+        } else {
+          // visually indicate past dates cannot be assigned
+          day.style.opacity = '0.85';
+          day.title = 'Cannot assign shifts to past dates';
+        }
 
         calendarGrid.appendChild(day);
       }
+    }
+
+    function editShift(key, idx){
+      const current = shifts[key] && shifts[key][idx];
+      if (current === undefined) return;
+      const updated = prompt('Edit name for duty (leave empty to delete):', current);
+      if (updated === null) return; // user cancelled
+      if (updated.trim() === ''){
+        if (confirm('Delete this assignment?')){
+          shifts[key].splice(idx,1);
+          if (shifts[key].length === 0) delete shifts[key];
+          saveShifts();
+          renderCalendar(currentMonth, currentYear);
+        }
+        return;
+      }
+      shifts[key][idx] = updated.trim();
+      saveShifts();
+      renderCalendar(currentMonth, currentYear);
     }
 
     document.getElementById('prevMonth').onclick = () => {
